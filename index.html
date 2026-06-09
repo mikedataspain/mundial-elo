@@ -104,7 +104,8 @@
       text-align: right;
     }
 
-    .t-flag { font-size: 15px; line-height: 1; }
+    .t-flag { display: inline-flex; align-items: center; }
+    .t-flag img { width: 20px; height: 15px; object-fit: cover; border-radius: 2px; display: block; }
 
     .t-name {
       font-size: 12.5px;
@@ -169,20 +170,20 @@
 </div>
 
 <script>
-// ── Banderas ──────────────────────────────────────────────────────────────────
+// ── Banderas (códigos ISO 3166-1 alpha-2 para flagcdn.com) ───────────────────
 const F = {
-  'España':'🇪🇸','Argentina':'🇦🇷','Francia':'🇫🇷','Brasil':'🇧🇷',
-  'Inglaterra':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Portugal':'🇵🇹','Colombia':'🇨🇴','Ecuador':'🇪🇨',
-  'Alemania':'🇩🇪','Países Bajos':'🇳🇱','Turquía':'🇹🇷','Suiza':'🇨🇭',
-  'Noruega':'🇳🇴','Croacia':'🇭🇷','México':'🇲🇽','Bélgica':'🇧🇪',
-  'Japón':'🇯🇵','Uruguay':'🇺🇾','Senegal':'🇸🇳','Marruecos':'🇲🇦',
-  'Paraguay':'🇵🇾','Canadá':'🇨🇦','Escocia':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Austria':'🇦🇹',
-  'Australia':'🇦🇺','Suecia':'🇸🇪','Argelia':'🇩🇿','Panamá':'🇵🇦',
-  'Rep. Checa':'🇨🇿','EE.UU.':'🇺🇸','Corea del Sur':'🇰🇷','Uzbekistán':'🇺🇿',
-  'Irán':'🇮🇷','Costa de Marfil':'🇨🇮','Bosnia-Herz.':'🇧🇦','Qatar':'🇶🇦',
-  'Haití':'🇭🇹','Sudáfrica':'🇿🇦','Curazao':'🇨🇼','Túnez':'🇹🇳',
-  'Cabo Verde':'🇨🇻','Arabia Saudí':'🇸🇦','Egipto':'🇪🇬','Nueva Zelanda':'🇳🇿',
-  'Jordania':'🇯🇴','Irak':'🇮🇶','RD Congo':'🇨🇩','Ghana':'🇬🇭'
+  'España':'es','Argentina':'ar','Francia':'fr','Brasil':'br',
+  'Inglaterra':'gb-eng','Portugal':'pt','Colombia':'co','Ecuador':'ec',
+  'Alemania':'de','Países Bajos':'nl','Turquía':'tr','Suiza':'ch',
+  'Noruega':'no','Croacia':'hr','México':'mx','Bélgica':'be',
+  'Japón':'jp','Uruguay':'uy','Senegal':'sn','Marruecos':'ma',
+  'Paraguay':'py','Canadá':'ca','Escocia':'gb-sct','Austria':'at',
+  'Australia':'au','Suecia':'se','Argelia':'dz','Panamá':'pa',
+  'Rep. Checa':'cz','EE.UU.':'us','Corea del Sur':'kr','Uzbekistán':'uz',
+  'Irán':'ir','Costa de Marfil':'ci','Bosnia-Herz.':'ba','Qatar':'qa',
+  'Haití':'ht','Sudáfrica':'za','Curazao':'cw','Túnez':'tn',
+  'Cabo Verde':'cv','Arabia Saudí':'sa','Egipto':'eg','Nueva Zelanda':'nz',
+  'Jordania':'jo','Irak':'iq','RD Congo':'cd','Ghana':'gh'
 };
 
 // ── Escala de color heatmap (valor 0-100 → r,g,b) ────────────────────────────
@@ -252,7 +253,10 @@ async function init() {
 
   rows.forEach((row, i) => {
     const name = row['Selección'] || '';
-    const flag = F[name] || '🏳';
+    const code = F[name];
+    const flagImg = code
+      ? `<img src="https://flagcdn.com/20x15/${code}.png" alt="${name}" loading="lazy">`
+      : '';
     const tr = document.createElement('tr');
 
     // Celda equipo (sticky)
@@ -260,7 +264,7 @@ async function init() {
     tdT.className = 'c-team';
     tdT.innerHTML = `<div class="t-inner">
       <span class="t-pos">${i + 1}</span>
-      <span class="t-flag">${flag}</span>
+      <span class="t-flag">${flagImg}</span>
       <span class="t-name">${name}</span>
     </div>`;
     tr.appendChild(tdT);
