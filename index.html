@@ -63,16 +63,7 @@
       text-align: center;
       white-space: nowrap;
       border-bottom: 2px solid #ddd;
-      cursor: pointer;
-      user-select: none;
     }
-
-    thead th:hover { background: #ebebeb; }
-
-    thead th.sorted { color: #111; background: #e8e8e8; }
-
-    .sort-icon { margin-left: 3px; opacity: 0.35; font-style: normal; }
-    thead th.sorted .sort-icon { opacity: 1; }
 
     thead th.h-team {
       text-align: left;
@@ -160,13 +151,13 @@
     <table>
       <thead>
         <tr>
-          <th class="h-team" data-col="Selección">Selección<i class="sort-icon">↕</i></th>
-          <th data-col="Grupos%">Grupos<i class="sort-icon">↕</i></th>
-          <th data-col="1/32%">R32<i class="sort-icon">↕</i></th>
-          <th data-col="1/16%">Octavos<i class="sort-icon">↕</i></th>
-          <th data-col="Cuartos%">Cuartos<i class="sort-icon">↕</i></th>
-          <th data-col="Semis%">Semis<i class="sort-icon">↕</i></th>
-          <th data-col="Campeón%">Campeón<i class="sort-icon">↕</i></th>
+          <th class="h-team">Selección</th>
+          <th>Grupos</th>
+          <th>R32</th>
+          <th>Octavos</th>
+          <th>Cuartos</th>
+          <th>Semis</th>
+          <th>Campeón</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -245,30 +236,22 @@ function fmt(v) {
 // ── Render ────────────────────────────────────────────────────────────────────
 const COLS = ['Grupos%','1/32%','1/16%','Cuartos%','Semis%','Campeón%'];
 
-let allRows = [];
-let sortCol = 'Campeón%';
-let sortDir = -1; // -1 = desc, 1 = asc
-
-function render() {
+async function init() {
   const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
+  let rows;
+  try {
+    const res = await fetch('./data.csv');
+    const txt = await res.text();
+    rows = parseCSV(txt);
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#aaa">No se pudieron cargar los datos.</td></tr>';
+    return;
+  }
 
-  const sorted = [...allRows].sort((a, b) => {
-    if (sortCol === 'Selección') {
-      return sortDir * a['Selección'].localeCompare(b['Selección'], 'es');
-    }
-    return sortDir * (parseFloat(b[sortCol] || 0) - parseFloat(a[sortCol] || 0));
-  });
+  // Ordenar por Campeón% desc (por si el CSV no viene ordenado)
+  rows.sort((a, b) => parseFloat(b['Campeón%'] || 0) - parseFloat(a['Campeón%'] || 0));
 
-  // Actualizar cabeceras
-  document.querySelectorAll('thead th').forEach(th => {
-    const col = th.dataset.col;
-    const icon = th.querySelector('.sort-icon');
-    th.classList.toggle('sorted', col === sortCol);
-    icon.textContent = col !== sortCol ? '↕' : (sortDir === -1 ? '↓' : '↑');
-  });
-
-  sorted.forEach((row, i) => {
+  rows.forEach((row, i) => {
     const name = row['Selección'] || '';
     const code = F[name];
     const flagImg = code
@@ -276,6 +259,7 @@ function render() {
       : '';
     const tr = document.createElement('tr');
 
+    // Celda equipo (sticky)
     const tdT = document.createElement('td');
     tdT.className = 'c-team';
     tdT.innerHTML = `<div class="t-inner">
@@ -285,6 +269,7 @@ function render() {
     </div>`;
     tr.appendChild(tdT);
 
+    // Celdas de porcentaje
     COLS.forEach(k => {
       const v = parseFloat(row[k]) || 0;
       const [bg, col] = heat(v);
@@ -298,34 +283,6 @@ function render() {
 
     tbody.appendChild(tr);
   });
-}
-
-async function init() {
-  const tbody = document.getElementById('tbody');
-  try {
-    const res = await fetch('./data.csv');
-    const txt = await res.text();
-    allRows = parseCSV(txt);
-  } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#aaa">No se pudieron cargar los datos.</td></tr>';
-    return;
-  }
-
-  // Click en cabecera → ordenar
-  document.querySelectorAll('thead th').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
-      if (sortCol === col) {
-        sortDir *= -1;
-      } else {
-        sortCol = col;
-        sortDir = col === 'Selección' ? 1 : -1;
-      }
-      render();
-    });
-  });
-
-  render();
 }
 
 init();
