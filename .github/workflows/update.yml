@@ -15,20 +15,36 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Comprobar si data.csv ya fue actualizado hoy
+        id: check
+        run: |
+          LAST=$(git log -1 --format="%cd" --date=format:"%Y-%m-%d" -- data.csv)
+          TODAY=$(date -u +%Y-%m-%d)
+          echo "Último commit de data.csv: $LAST | Hoy: $TODAY"
+          if [ "$LAST" = "$TODAY" ]; then
+            echo "ya_actualizado=true" >> $GITHUB_OUTPUT
+          else
+            echo "ya_actualizado=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Configurar Python
+        if: steps.check.outputs.ya_actualizado == 'false'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Instalar dependencias
+        if: steps.check.outputs.ya_actualizado == 'false'
         run: |
           pip install -r requirements_ci.txt
           playwright install chromium --with-deps
 
       - name: Ejecutar pipeline
+        if: steps.check.outputs.ya_actualizado == 'false'
         run: python actualizar_ci.py
 
       - name: Commit y push de data.csv y caché
+        if: steps.check.outputs.ya_actualizado == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
