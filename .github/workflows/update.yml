@@ -14,17 +14,21 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 5   # suficiente para git log de data.csv
 
       - name: Comprobar si data.csv ya fue actualizado hoy
         id: check
         run: |
-          LAST=$(git log -1 --format="%cd" --date=format:"%Y-%m-%d" -- data.csv)
-          TODAY=$(date -u +%Y-%m-%d)
-          echo "Último commit de data.csv: $LAST | Hoy: $TODAY"
+          LAST=$(git log -1 --format="%cd" --date=format-local:"%Y-%m-%d" -- data.csv 2>/dev/null || echo "")
+          TODAY=$(TZ="Europe/Madrid" date +%Y-%m-%d)
+          echo "Último commit de data.csv: '$LAST' | Hoy Madrid: '$TODAY'"
           if [ "$LAST" = "$TODAY" ]; then
             echo "ya_actualizado=true" >> $GITHUB_OUTPUT
+            echo "✓ data.csv ya actualizado hoy — saltando pipeline."
           else
             echo "ya_actualizado=false" >> $GITHUB_OUTPUT
+            echo "→ data.csv desactualizado — ejecutando pipeline."
           fi
 
       - name: Configurar Python
@@ -33,11 +37,33 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar dependencias
+      - name: Caché de pip
         if: steps.check.outputs.ya_actualizado == 'false'
-        run: |
-          pip install -r requirements_ci.txt
-          playwright install chromium --with-deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements_ci.txt') }}
+          restore-keys: pip-
+
+      - name: Instalar dependencias Python
+        if: steps.check.outputs.ya_actualizado == 'false'
+        run: pip install -r requirements_ci.txt
+
+      - name: Caché de Playwright (Chromium)
+        if: steps.check.outputs.ya_actualizado == 'false'
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('requirements_ci.txt') }}
+
+      - name: Instalar Chromium
+        if: steps.check.outputs.ya_actualizado == 'false' && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: playwright install chromium --with-deps
+
+      - name: Instalar dependencias de sistema para Chromium (si usamos caché)
+        if: steps.check.outputs.ya_actualizado == 'false' && steps.playwright-cache.outputs.cache-hit == 'true'
+        run: playwright install-deps chromium
 
       - name: Ejecutar pipeline
         if: steps.check.outputs.ya_actualizado == 'false'
@@ -49,5 +75,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data.csv .cache/
-          git diff --staged --quiet || git commit -m "Auto: actualización $(date +'%Y-%m-%d %H:%M UTC')"
+          git diff --staged --quiet && echo "Sin cambios en data.csv — nada que commitear." && exit 0
+          git commit -m "Auto: actualización $(date +'%Y-%m-%d %H:%M UTC')"
+          git pull --rebase origin main
           git push

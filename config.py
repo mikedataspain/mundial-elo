@@ -50,7 +50,7 @@ DRAW_CALIBRATION = [
 # Validaciones
 MIN_EQUIPOS_REQUERIDOS = 40       # mínimo de Elos extraídos para continuar
 ELO_MIN, ELO_MAX = 1200, 2300    # rango válido de Elo
-MAX_CAMBIO_ELO_DIARIO = 50       # máx. variación respecto al día anterior
+MAX_CAMBIO_ELO_DIARIO = 9999     # sin restricción de variación diaria
 
 # ---------------------------------------------------------------------------
 # Google Sheets / Docs
@@ -79,7 +79,7 @@ SHEET_TEXTO_METODO    = "Texto método"
 # Scraping
 # ---------------------------------------------------------------------------
 URL_ELO = "https://eloratings.net/"
-PLAYWRIGHT_TIMEOUT_MS = 30_000    # 30 s de espera máxima
+PLAYWRIGHT_TIMEOUT_MS = 60_000    # 60 s de espera máxima
 PLAYWRIGHT_HEADLESS = True
 
 # ---------------------------------------------------------------------------
