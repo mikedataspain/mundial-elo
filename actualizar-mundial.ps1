@@ -17,8 +17,18 @@ Write-Host "CSV copiado correctamente."
 
 # Subir a GitHub
 Set-Location $repo
+git pull --rebase origin main
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "git pull --rebase falló. Abortando push."
+    git rebase --abort
+    exit 1
+}
 git add data.csv
 $fecha = Get-Date -Format "yyyy-MM-dd HH:mm"
 git commit -m "Actualización automática $fecha"
 git push origin main
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "git push falló. Comprueba el estado del repo."
+    exit 1
+}
 Write-Host "Subido a GitHub correctamente."
