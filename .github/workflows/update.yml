@@ -77,5 +77,11 @@ jobs:
           git add data.csv .cache/
           git diff --staged --quiet && echo "Sin cambios en data.csv — nada que commitear." && exit 0
           git commit -m "Auto: actualización $(date +'%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin main
-          git push
+          # Primer intento de push
+          if ! git push; then
+            echo "Push rechazado (posible push concurrente del portátil). Reintentando…"
+            # Pull con preferencia a lo remoto en caso de conflicto en data.csv.
+            # Si el portátil ya actualizó data.csv, lo respetamos y descartamos el cambio de GA.
+            git pull --rebase -X ours origin main
+            git push
+          fi
