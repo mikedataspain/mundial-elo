@@ -17,7 +17,7 @@ Write-Host "CSV copiado correctamente."
 
 # Subir a GitHub
 Set-Location $repo
-git pull --rebase origin main
+git pull --rebase --autostash origin main
 if ($LASTEXITCODE -ne 0) {
     Write-Error "git pull --rebase falló. Abortando push."
     git rebase --abort
