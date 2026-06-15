@@ -97,6 +97,7 @@ def simular_fase_grupos(
     elos: dict[str, float],
     n_sims: int = N_SIMULACIONES,
     seed: Optional[int] = None,
+    resultados_reales: Optional[dict] = None,
 ) -> dict:
     """
     Simula la fase de grupos completa (72 partidos × n_sims).
@@ -136,16 +137,20 @@ def simular_fase_grupos(
         puntos = np.zeros((n_eq, n_sims), dtype=np.int32)
 
         for match_i, (ia, ib) in enumerate(GROUP_MATCHUPS):
-            ea, eb = elos_g[ia], elos_g[ib]
-            pa, pd, _ = probabilidades_partido(ea, eb)
-            resultados = _simular_resultado_grupo(rand_all[match_i], pa, pd)
-
-            a_gana = (resultados == 0)
-            empate  = (resultados == 1)
-            b_gana  = (resultados == 2)
-
-            puntos[ia] += np.where(a_gana, 3, np.where(empate, 1, 0))
-            puntos[ib] += np.where(b_gana, 3, np.where(empate, 1, 0))
+            key = frozenset({equipos_g[ia], equipos_g[ib]})
+            if resultados_reales and key in resultados_reales:
+                pts_map = resultados_reales[key]
+                puntos[ia] += pts_map.get(equipos_g[ia], 0)
+                puntos[ib] += pts_map.get(equipos_g[ib], 0)
+            else:
+                ea, eb = elos_g[ia], elos_g[ib]
+                pa, pd, _ = probabilidades_partido(ea, eb)
+                res_sim = _simular_resultado_grupo(rand_all[match_i], pa, pd)
+                a_gana = (res_sim == 0)
+                empate  = (res_sim == 1)
+                b_gana  = (res_sim == 2)
+                puntos[ia] += np.where(a_gana, 3, np.where(empate, 1, 0))
+                puntos[ib] += np.where(b_gana, 3, np.where(empate, 1, 0))
 
         # Desempate: puntos primero, Elo como criterio secundario (fraccional pequeño)
         elo_tiebreak = elos_g / 1_000_000.0   # fracción < 1 punto
@@ -272,6 +277,7 @@ def simular_torneo_completo(
     elos:    dict[str, float],
     n_sims:  int = N_SIMULACIONES,
     seed:    Optional[int] = None,
+    resultados_reales: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
     Simula el torneo completo (grupos + eliminatorias) n_sims veces.
@@ -283,7 +289,8 @@ def simular_torneo_completo(
     logger.info(f"Iniciando Monte Carlo: {n_sims:,} simulaciones…")
 
     # --- Fase de grupos ---
-    res = simular_fase_grupos(grupos, elos, n_sims=n_sims, seed=seed)
+    res = simular_fase_grupos(grupos, elos, n_sims=n_sims, seed=seed,
+                              resultados_reales=resultados_reales)
     todos = res["equipo_nombre"]
     n_eq  = len(todos)
     eq_idx = res["equipo_idx"]

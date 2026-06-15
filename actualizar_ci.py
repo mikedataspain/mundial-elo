@@ -22,6 +22,7 @@ from config import CSV_PRONOSTICADOR, JSON_CACHE_PROBS, N_SIMULACIONES
 from equivalencias import GRUPOS, EQUIPOS_MUNDIAL_48
 from fixtures import get_calendario
 from modelo import calcular_probabilidades_fase_grupos, simular_torneo_completo
+from resultados import obtener_resultados_jugados
 from scraper import obtener_elos_con_fallback
 from validacion import (
     cargar_elos_anteriores,
@@ -65,7 +66,9 @@ def main():
     t0 = time.time()
     calendario = get_calendario(GRUPOS)
     calcular_probabilidades_fase_grupos(calendario, elos)
-    df = simular_torneo_completo(GRUPOS, elos, n_sims=N_SIMULACIONES)
+    resultados_reales = obtener_resultados_jugados(calendario)
+    df = simular_torneo_completo(GRUPOS, elos, n_sims=N_SIMULACIONES,
+                                 resultados_reales=resultados_reales)
     logger.info(f"Monte Carlo completado en {time.time() - t0:.1f}s.")
 
     # 4. Exportar CSV y copiar a data.csv
