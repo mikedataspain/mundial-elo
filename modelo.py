@@ -87,6 +87,45 @@ def _simular_resultado_grupo(
 # 3. SIMULACIÓN FASE DE GRUPOS
 # ---------------------------------------------------------------------------
 
+def _simular_marcador(
+    resultado: np.ndarray,
+    delta_elo: float,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Dado el resultado de cada simulación (0=A gana, 1=empate, 2=B gana),
+    genera un marcador plausible. No altera las probabilidades de resultado;
+    sirve únicamente para calcular GD y GF en el desempate de grupo.
+    """
+    n = len(resultado)
+    mu_margin = 1.2 + abs(delta_elo) / 400.0
+
+    a_gana = resultado == 0
+    empate  = resultado == 1
+    b_gana  = resultado == 2
+
+    goles_a = np.zeros(n, dtype=np.int32)
+    goles_b = np.zeros(n, dtype=np.int32)
+
+    if empate.any():
+        g = rng.poisson(1.1, n)
+        goles_a[empate] = g[empate]
+        goles_b[empate] = g[empate]
+
+    if a_gana.any():
+        concedidos = rng.poisson(0.7, n)
+        margen = np.maximum(1, rng.poisson(mu_margin, n))
+        goles_a[a_gana] = (concedidos + margen)[a_gana]
+        goles_b[a_gana] = concedidos[a_gana]
+
+    if b_gana.any():
+        concedidos = rng.poisson(0.7, n)
+        margen = np.maximum(1, rng.poisson(mu_margin, n))
+        goles_b[b_gana] = (concedidos + margen)[b_gana]
+        goles_a[b_gana] = concedidos[b_gana]
+
+    return goles_a, goles_b
+
 # Índices de partidos dentro de un grupo de 4 equipos (posición 0-3)
 # Orden: JD1: 0v1, 2v3 | JD2: 0v2, 1v3 | JD3: 0v3, 1v2
 GROUP_MATCHUPS = [(0, 1), (2, 3), (0, 2), (1, 3), (0, 3), (1, 2)]
@@ -108,6 +147,8 @@ def simular_fase_grupos(
       "clasificados_2":  dict[grupo → array(n_sims) con idx del 2º]
       "clasificados_3":  dict[grupo → array(n_sims) con idx del 3º]
       "terceros_puntos": dict[grupo → array(n_sims) con puntos del 3º]
+      "terceros_gd":     dict[grupo → array(n_sims) con GD del 3º]
+      "terceros_gf":     dict[grupo → array(n_sims) con GF del 3º]
       "equipo_idx":      dict[nombre_equipo → índice global 0-47]
       "equipo_nombre":   lista de 48 nombres indexados
     }
@@ -126,6 +167,8 @@ def simular_fase_grupos(
     c2 = {}
     c3 = {}
     c3_pts = {}
+    c3_gd  = {}
+    c3_gf  = {}
 
     for grupo in lista_grupos:
         equipos_g = grupos[grupo]   # lista 4 equipos
@@ -135,6 +178,8 @@ def simular_fase_grupos(
         # Generar resultados de 6 partidos × n_sims
         rand_all = rng.random((6, n_sims))   # shape (6, n_sims)
         puntos = np.zeros((n_eq, n_sims), dtype=np.int32)
+        gf     = np.zeros((n_eq, n_sims), dtype=np.int32)   # goles a favor
+        gc     = np.zeros((n_eq, n_sims), dtype=np.int32)   # goles en contra
 
         for match_i, (ia, ib) in enumerate(GROUP_MATCHUPS):
             key = frozenset({equipos_g[ia], equipos_g[ib]})
@@ -142,6 +187,11 @@ def simular_fase_grupos(
                 pts_map = resultados_reales[key]
                 puntos[ia] += pts_map.get(equipos_g[ia], 0)
                 puntos[ib] += pts_map.get(equipos_g[ib], 0)
+                goles_map = pts_map.get("goles", {})
+                ga_r = goles_map.get(equipos_g[ia], 0)
+                gb_r = goles_map.get(equipos_g[ib], 0)
+                gf[ia] += ga_r;  gc[ia] += gb_r
+                gf[ib] += gb_r;  gc[ib] += ga_r
             else:
                 ea, eb = elos_g[ia], elos_g[ib]
                 pa, pd, _ = probabilidades_partido(ea, eb)
@@ -151,10 +201,19 @@ def simular_fase_grupos(
                 b_gana  = (res_sim == 2)
                 puntos[ia] += np.where(a_gana, 3, np.where(empate, 1, 0))
                 puntos[ib] += np.where(b_gana, 3, np.where(empate, 1, 0))
+                ga, gb = _simular_marcador(res_sim, ea - eb, rng)
+                gf[ia] += ga;  gc[ia] += gb
+                gf[ib] += gb;  gc[ib] += ga
 
-        # Desempate: puntos primero, Elo como criterio secundario (fraccional pequeño)
-        elo_tiebreak = elos_g / 1_000_000.0   # fracción < 1 punto
-        scores = puntos + elo_tiebreak[:, np.newaxis]   # (4, n_sims)
+        # Desempate: puntos → GD → GF → Elo (criterio fraccional final)
+        gd = gf - gc   # (n_eq, n_sims), puede ser negativo
+        elo_tiebreak = elos_g / 1_000_000.0
+        scores = (
+            puntos.astype(np.float64) * 1e7
+            + (gd + 200).astype(np.float64) * 1e4   # +200 para evitar negativos
+            + gf.astype(np.float64) * 1e2
+            + elo_tiebreak[:, np.newaxis]
+        )
 
         # Ordenar de mayor a menor (argsort inverso)
         ranking = np.argsort(-scores, axis=0)   # (4, n_sims): ranking[pos, sim] = idx_local
@@ -163,16 +222,21 @@ def simular_fase_grupos(
         base = equipo_idx[equipos_g[0]]   # índice global del primer equipo del grupo
         idx_global = base + ranking        # broadcasting: base es escalar, ranking (4, n_sims)
 
-        c1[grupo] = idx_global[0]   # (n_sims,) índice global del 1º
-        c2[grupo] = idx_global[1]
-        c3[grupo] = idx_global[2]
-        c3_pts[grupo] = puntos[ranking[2], np.arange(n_sims)]   # puntos del 3º
+        sims_idx = np.arange(n_sims)
+        c1[grupo]    = idx_global[0]
+        c2[grupo]    = idx_global[1]
+        c3[grupo]    = idx_global[2]
+        c3_pts[grupo] = puntos[ranking[2], sims_idx]
+        c3_gd[grupo]  = gd[ranking[2],     sims_idx]
+        c3_gf[grupo]  = gf[ranking[2],     sims_idx]
 
     return {
         "clasificados_1":  c1,
         "clasificados_2":  c2,
         "clasificados_3":  c3,
         "terceros_puntos": c3_pts,
+        "terceros_gd":     c3_gd,
+        "terceros_gf":     c3_gf,
         "equipo_idx":      equipo_idx,
         "equipo_nombre":   equipo_nombre,
         "n_sims":          n_sims,
@@ -194,22 +258,30 @@ def seleccionar_mejores_terceros(
     n_sims = res_grupos["n_sims"]
     eq_nombre = res_grupos["equipo_nombre"]
 
-    # Construir matriz (12, n_sims) de puntos y (12, n_sims) de Elos
-    pts_mat  = np.zeros((12, n_sims), dtype=np.int32)
-    elo_mat  = np.zeros((12, n_sims), dtype=np.float64)
-    idx_mat  = np.zeros((12, n_sims), dtype=np.int32)
+    # Construir matrices (12, n_sims)
+    pts_mat = np.zeros((12, n_sims), dtype=np.int32)
+    gd_mat  = np.zeros((12, n_sims), dtype=np.int32)
+    gf_mat  = np.zeros((12, n_sims), dtype=np.int32)
+    elo_mat = np.zeros((12, n_sims), dtype=np.float64)
+    idx_mat = np.zeros((12, n_sims), dtype=np.int32)
+
+    elos_arr = np.array([elos.get(eq_nombre[j], 1500.0) for j in range(len(eq_nombre))])
 
     for i, grupo in enumerate(lista_grupos):
-        idx = res_grupos["clasificados_3"][grupo]   # (n_sims,)
-        pts = res_grupos["terceros_puntos"][grupo]   # (n_sims,)
-        elos_arr = np.array([elos.get(eq_nombre[j], 1500.0) for j in range(len(eq_nombre))])
-        elo_vals = elos_arr[idx]   # (n_sims,)
+        idx = res_grupos["clasificados_3"][grupo]
         idx_mat[i]  = idx
-        pts_mat[i]  = pts
-        elo_mat[i]  = elo_vals
+        pts_mat[i]  = res_grupos["terceros_puntos"][grupo]
+        gd_mat[i]   = res_grupos["terceros_gd"][grupo]
+        gf_mat[i]   = res_grupos["terceros_gf"][grupo]
+        elo_mat[i]  = elos_arr[idx]
 
-    # Score compuesto para ordenar: puntos * 1e6 + Elo
-    scores = pts_mat * 1_000_000.0 + elo_mat   # (12, n_sims)
+    # Desempate: puntos → GD → GF → Elo (igual que en fase de grupos)
+    scores = (
+        pts_mat.astype(np.float64) * 1e7
+        + (gd_mat + 200).astype(np.float64) * 1e4
+        + gf_mat.astype(np.float64) * 1e2
+        + elo_mat
+    )
 
     # Ordenar descendente y tomar top-n_mejores
     ranking = np.argsort(-scores, axis=0)[:n_mejores]   # (n_mejores, n_sims)
