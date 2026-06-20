@@ -1,441 +1,441 @@
 {
-  "fecha": "2026-06-12",
+  "fecha": "2026-06-20",
   "probs": {
     "probs": {
       "España": {
-        "Grupos%": 99.8,
-        "1/32%": 82.7,
-        "1/16%": 66.9,
-        "Cuartos%": 53.7,
-        "Semis%": 43.1,
-        "Campeón%": 29.5
+        "Grupos%": 98.1,
+        "1/32%": 78.4,
+        "1/16%": 62.5,
+        "Cuartos%": 50.2,
+        "Semis%": 39.3,
+        "Campeón%": 24.9
       },
       "Argentina": {
-        "Grupos%": 98.9,
-        "1/32%": 74.8,
-        "1/16%": 54.2,
-        "Cuartos%": 35.8,
-        "Semis%": 27.9,
-        "Campeón%": 17.2
+        "Grupos%": 99.9,
+        "1/32%": 80.7,
+        "1/16%": 54.8,
+        "Cuartos%": 35.5,
+        "Semis%": 28.8,
+        "Campeón%": 19.2
       },
       "Francia": {
-        "Grupos%": 97.7,
-        "1/32%": 65.9,
-        "1/16%": 44.8,
-        "Cuartos%": 24.9,
-        "Semis%": 17.6,
-        "Campeón%": 9.7
-      },
-      "Brasil": {
-        "Grupos%": 97.6,
-        "1/32%": 73.3,
-        "1/16%": 52.9,
-        "Cuartos%": 35.8,
-        "Semis%": 15.5,
-        "Campeón%": 7.4
+        "Grupos%": 99.9,
+        "1/32%": 70.1,
+        "1/16%": 47.7,
+        "Cuartos%": 24.6,
+        "Semis%": 18.9,
+        "Campeón%": 11.5
       },
       "Inglaterra": {
-        "Grupos%": 98.7,
-        "1/32%": 66.0,
-        "1/16%": 34.1,
-        "Cuartos%": 18.9,
-        "Semis%": 12.5,
-        "Campeón%": 6.3
+        "Grupos%": 99.9,
+        "1/32%": 72.4,
+        "1/16%": 34.6,
+        "Cuartos%": 19.1,
+        "Semis%": 14.2,
+        "Campeón%": 8.1
       },
-      "Portugal": {
-        "Grupos%": 95.8,
-        "1/32%": 54.1,
-        "1/16%": 28.1,
-        "Cuartos%": 13.3,
-        "Semis%": 7.9,
-        "Campeón%": 3.7
-      },
-      "Colombia": {
-        "Grupos%": 95.4,
-        "1/32%": 51.1,
-        "1/16%": 26.6,
-        "Cuartos%": 12.6,
-        "Semis%": 7.2,
-        "Campeón%": 3.2
-      },
-      "Ecuador": {
-        "Grupos%": 98.0,
-        "1/32%": 67.6,
-        "1/16%": 39.4,
-        "Cuartos%": 14.3,
-        "Semis%": 7.3,
-        "Campeón%": 3.0
+      "Brasil": {
+        "Grupos%": 100.0,
+        "1/32%": 75.3,
+        "1/16%": 50.6,
+        "Cuartos%": 35.6,
+        "Semis%": 16.2,
+        "Campeón%": 7.3
       },
       "Alemania": {
-        "Grupos%": 97.7,
-        "1/32%": 64.5,
-        "1/16%": 36.6,
-        "Cuartos%": 13.3,
-        "Semis%": 6.5,
-        "Campeón%": 2.5
+        "Grupos%": 99.9,
+        "1/32%": 71.4,
+        "1/16%": 48.0,
+        "Cuartos%": 18.9,
+        "Semis%": 9.9,
+        "Campeón%": 3.9
+      },
+      "Colombia": {
+        "Grupos%": 99.4,
+        "1/32%": 55.1,
+        "1/16%": 27.0,
+        "Cuartos%": 11.6,
+        "Semis%": 7.3,
+        "Campeón%": 3.6
       },
       "Países Bajos": {
-        "Grupos%": 95.0,
-        "1/32%": 47.8,
-        "1/16%": 18.5,
-        "Cuartos%": 10.8,
-        "Semis%": 5.6,
-        "Campeón%": 2.3
+        "Grupos%": 94.2,
+        "1/32%": 51.7,
+        "1/16%": 23.0,
+        "Cuartos%": 13.9,
+        "Semis%": 7.0,
+        "Campeón%": 2.8
       },
-      "Turquía": {
-        "Grupos%": 88.9,
-        "1/32%": 57.3,
-        "1/16%": 35.1,
-        "Cuartos%": 18.0,
-        "Semis%": 5.9,
+      "Portugal": {
+        "Grupos%": 85.6,
+        "1/32%": 39.3,
+        "1/16%": 19.1,
+        "Cuartos%": 8.2,
+        "Semis%": 4.5,
         "Campeón%": 2.1
       },
+      "Ecuador": {
+        "Grupos%": 90.7,
+        "1/32%": 56.5,
+        "1/16%": 34.7,
+        "Cuartos%": 17.7,
+        "Semis%": 5.6,
+        "Campeón%": 2.0
+      },
       "Suiza": {
-        "Grupos%": 98.2,
-        "1/32%": 57.2,
-        "1/16%": 33.7,
-        "Cuartos%": 16.2,
-        "Semis%": 5.0,
-        "Campeón%": 1.7
-      },
-      "Noruega": {
-        "Grupos%": 88.5,
-        "1/32%": 43.7,
-        "1/16%": 20.3,
-        "Cuartos%": 9.7,
-        "Semis%": 4.0,
-        "Campeón%": 1.4
-      },
-      "Bélgica": {
-        "Grupos%": 95.3,
-        "1/32%": 47.9,
-        "1/16%": 25.5,
-        "Cuartos%": 8.2,
-        "Semis%": 3.7,
-        "Campeón%": 1.3
+        "Grupos%": 100.0,
+        "1/32%": 60.1,
+        "1/16%": 37.5,
+        "Cuartos%": 17.1,
+        "Semis%": 5.7,
+        "Campeón%": 1.8
       },
       "México": {
-        "Grupos%": 95.5,
-        "1/32%": 50.4,
-        "1/16%": 25.3,
-        "Cuartos%": 13.6,
-        "Semis%": 4.0,
-        "Campeón%": 1.3
-      },
-      "Croacia": {
-        "Grupos%": 95.2,
-        "1/32%": 41.6,
-        "1/16%": 17.0,
-        "Cuartos%": 7.9,
-        "Semis%": 3.5,
-        "Campeón%": 1.2
+        "Grupos%": 100.0,
+        "1/32%": 53.4,
+        "1/16%": 25.9,
+        "Cuartos%": 15.0,
+        "Semis%": 5.3,
+        "Campeón%": 1.8
       },
       "Japón": {
-        "Grupos%": 91.8,
-        "1/32%": 36.6,
-        "1/16%": 14.4,
-        "Cuartos%": 7.8,
-        "Semis%": 3.3,
+        "Grupos%": 92.2,
+        "1/32%": 40.9,
+        "1/16%": 18.8,
+        "Cuartos%": 11.1,
+        "Semis%": 4.6,
+        "Campeón%": 1.6
+      },
+      "Noruega": {
+        "Grupos%": 99.6,
+        "1/32%": 48.9,
+        "1/16%": 20.5,
+        "Cuartos%": 9.0,
+        "Semis%": 3.9,
+        "Campeón%": 1.6
+      },
+      "Bélgica": {
+        "Grupos%": 90.6,
+        "1/32%": 49.9,
+        "1/16%": 27.2,
+        "Cuartos%": 8.6,
+        "Semis%": 4.0,
         "Campeón%": 1.2
       },
-      "Uruguay": {
-        "Grupos%": 94.8,
-        "1/32%": 47.4,
-        "1/16%": 13.7,
-        "Cuartos%": 6.9,
-        "Semis%": 2.9,
-        "Campeón%": 1.0
+      "Marruecos": {
+        "Grupos%": 100.0,
+        "1/32%": 51.8,
+        "1/16%": 22.0,
+        "Cuartos%": 12.0,
+        "Semis%": 3.8,
+        "Campeón%": 1.1
       },
       "Senegal": {
-        "Grupos%": 81.0,
-        "1/32%": 38.8,
-        "1/16%": 18.9,
-        "Cuartos%": 9.4,
-        "Semis%": 2.7,
-        "Campeón%": 0.8
+        "Grupos%": 73.8,
+        "1/32%": 36.9,
+        "1/16%": 19.8,
+        "Cuartos%": 10.1,
+        "Semis%": 2.3,
+        "Campeón%": 0.7
       },
-      "Marruecos": {
-        "Grupos%": 86.0,
-        "1/32%": 45.3,
-        "1/16%": 18.6,
-        "Cuartos%": 8.7,
-        "Semis%": 2.1,
+      "Uruguay": {
+        "Grupos%": 77.2,
+        "1/32%": 36.9,
+        "1/16%": 10.4,
+        "Cuartos%": 5.2,
+        "Semis%": 2.2,
         "Campeón%": 0.6
       },
       "Paraguay": {
-        "Grupos%": 77.5,
-        "1/32%": 41.0,
-        "1/16%": 19.8,
-        "Cuartos%": 8.5,
-        "Semis%": 2.1,
+        "Grupos%": 96.7,
+        "1/32%": 45.5,
+        "1/16%": 23.6,
+        "Cuartos%": 9.6,
+        "Semis%": 2.2,
         "Campeón%": 0.6
       },
+      "EE.UU.": {
+        "Grupos%": 100.0,
+        "1/32%": 52.0,
+        "1/16%": 24.2,
+        "Cuartos%": 9.1,
+        "Semis%": 2.4,
+        "Campeón%": 0.6
+      },
+      "Austria": {
+        "Grupos%": 98.8,
+        "1/32%": 33.7,
+        "1/16%": 10.8,
+        "Cuartos%": 4.4,
+        "Semis%": 1.4,
+        "Campeón%": 0.5
+      },
+      "Australia": {
+        "Grupos%": 85.8,
+        "1/32%": 41.0,
+        "1/16%": 20.3,
+        "Cuartos%": 8.6,
+        "Semis%": 1.8,
+        "Campeón%": 0.5
+      },
+      "Croacia": {
+        "Grupos%": 90.0,
+        "1/32%": 26.2,
+        "1/16%": 10.3,
+        "Cuartos%": 4.4,
+        "Semis%": 1.6,
+        "Campeón%": 0.5
+      },
       "Canadá": {
-        "Grupos%": 93.7,
-        "1/32%": 40.2,
-        "1/16%": 16.1,
-        "Cuartos%": 5.8,
-        "Semis%": 1.2,
+        "Grupos%": 100.0,
+        "1/32%": 44.2,
+        "1/16%": 17.1,
+        "Cuartos%": 5.5,
+        "Semis%": 1.3,
         "Campeón%": 0.3
       },
       "Escocia": {
-        "Grupos%": 78.1,
-        "1/32%": 37.3,
-        "1/16%": 15.1,
-        "Cuartos%": 6.3,
-        "Semis%": 1.2,
+        "Grupos%": 86.0,
+        "1/32%": 40.5,
+        "1/16%": 18.5,
+        "Cuartos%": 7.6,
+        "Semis%": 1.3,
         "Campeón%": 0.3
       },
-      "Austria": {
-        "Grupos%": 76.7,
-        "1/32%": 28.9,
-        "1/16%": 9.7,
-        "Cuartos%": 3.9,
-        "Semis%": 1.2,
-        "Campeón%": 0.3
-      },
-      "Australia": {
-        "Grupos%": 64.7,
-        "1/32%": 30.2,
-        "1/16%": 12.6,
-        "Cuartos%": 4.7,
-        "Semis%": 0.9,
+      "Suecia": {
+        "Grupos%": 86.1,
+        "1/32%": 33.2,
+        "1/16%": 11.8,
+        "Cuartos%": 4.6,
+        "Semis%": 0.8,
         "Campeón%": 0.2
       },
       "Corea del Sur": {
-        "Grupos%": 87.2,
-        "1/32%": 33.2,
-        "1/16%": 13.1,
-        "Cuartos%": 5.3,
-        "Semis%": 1.1,
+        "Grupos%": 93.9,
+        "1/32%": 28.1,
+        "1/16%": 10.1,
+        "Cuartos%": 4.1,
+        "Semis%": 0.9,
         "Campeón%": 0.2
       },
-      "Irán": {
-        "Grupos%": 82.9,
-        "1/32%": 29.7,
-        "1/16%": 10.9,
-        "Cuartos%": 2.8,
-        "Semis%": 0.7,
-        "Campeón%": 0.1
-      },
-      "Panamá": {
-        "Grupos%": 69.2,
-        "1/32%": 25.3,
-        "1/16%": 9.4,
+      "Argelia": {
+        "Grupos%": 50.5,
+        "1/32%": 19.9,
+        "1/16%": 8.1,
         "Cuartos%": 3.2,
         "Semis%": 0.5,
         "Campeón%": 0.1
       },
-      "Rep. Checa": {
-        "Grupos%": 71.9,
-        "1/32%": 25.3,
-        "1/16%": 8.5,
-        "Cuartos%": 2.7,
-        "Semis%": 0.4,
-        "Campeón%": 0.1
-      },
-      "EE.UU.": {
-        "Grupos%": 47.6,
-        "1/32%": 19.9,
-        "1/16%": 7.2,
-        "Cuartos%": 2.3,
-        "Semis%": 0.4,
-        "Campeón%": 0.1
-      },
-      "Argelia": {
-        "Grupos%": 61.6,
+      "Irán": {
+        "Grupos%": 60.3,
         "1/32%": 23.4,
-        "1/16%": 8.7,
-        "Cuartos%": 3.2,
-        "Semis%": 0.6,
+        "1/16%": 8.5,
+        "Cuartos%": 2.0,
+        "Semis%": 0.5,
         "Campeón%": 0.1
       },
-      "Uzbekistán": {
-        "Grupos%": 49.6,
-        "1/32%": 18.0,
-        "1/16%": 6.5,
-        "Cuartos%": 2.1,
+      "Turquía": {
+        "Grupos%": 10.5,
+        "1/32%": 5.7,
+        "1/16%": 3.2,
+        "Cuartos%": 1.4,
         "Semis%": 0.3,
         "Campeón%": 0.1
       },
-      "Haití": {
-        "Grupos%": 13.9,
-        "1/32%": 3.4,
-        "1/16%": 0.6,
-        "Cuartos%": 0.1,
+      "Costa de Marfil": {
+        "Grupos%": 96.8,
+        "1/32%": 41.6,
+        "1/16%": 13.9,
+        "Cuartos%": 3.4,
+        "Semis%": 0.7,
+        "Campeón%": 0.1
+      },
+      "Sudáfrica": {
+        "Grupos%": 16.4,
+        "1/32%": 2.1,
+        "1/16%": 0.3,
+        "Cuartos%": 0.0,
         "Semis%": 0.0,
         "Campeón%": 0.0
       },
-      "Sudáfrica": {
-        "Grupos%": 16.5,
-        "1/32%": 3.0,
-        "1/16%": 0.5,
-        "Cuartos%": 0.1,
+      "Haití": {
+        "Grupos%": 0.0,
+        "1/32%": 0.0,
+        "1/16%": 0.0,
+        "Cuartos%": 0.0,
         "Semis%": 0.0,
+        "Campeón%": 0.0
+      },
+      "Rep. Checa": {
+        "Grupos%": 19.3,
+        "1/32%": 8.6,
+        "1/16%": 3.0,
+        "Cuartos%": 1.0,
+        "Semis%": 0.1,
         "Campeón%": 0.0
       },
       "Bosnia-Herz.": {
-        "Grupos%": 49.4,
-        "1/32%": 13.6,
-        "1/16%": 3.2,
-        "Cuartos%": 0.6,
-        "Semis%": 0.0,
+        "Grupos%": 54.9,
+        "1/32%": 18.7,
+        "1/16%": 4.3,
+        "Cuartos%": 0.9,
+        "Semis%": 0.1,
         "Campeón%": 0.0
       },
       "Qatar": {
-        "Grupos%": 11.3,
-        "1/32%": 1.4,
-        "1/16%": 0.1,
+        "Grupos%": 21.7,
+        "1/32%": 3.6,
+        "1/16%": 0.4,
         "Cuartos%": 0.0,
         "Semis%": 0.0,
         "Campeón%": 0.0
       },
       "Curazao": {
-        "Grupos%": 6.1,
-        "1/32%": 1.0,
+        "Grupos%": 2.7,
+        "1/32%": 0.5,
         "1/16%": 0.1,
         "Cuartos%": 0.0,
         "Semis%": 0.0,
         "Campeón%": 0.0
       },
-      "Costa de Marfil": {
-        "Grupos%": 62.8,
-        "1/32%": 26.1,
-        "1/16%": 8.8,
-        "Cuartos%": 2.3,
-        "Semis%": 0.3,
-        "Campeón%": 0.0
-      },
-      "Suecia": {
-        "Grupos%": 53.9,
-        "1/32%": 18.0,
-        "1/16%": 6.3,
-        "Cuartos%": 2.0,
-        "Semis%": 0.3,
-        "Campeón%": 0.0
-      },
       "Túnez": {
-        "Grupos%": 27.3,
-        "1/32%": 7.1,
-        "1/16%": 1.9,
-        "Cuartos%": 0.5,
-        "Semis%": 0.0,
-        "Campeón%": 0.0
-      },
-      "Cabo Verde": {
-        "Grupos%": 21.2,
-        "1/32%": 5.5,
-        "1/16%": 1.2,
-        "Cuartos%": 0.2,
-        "Semis%": 0.0,
-        "Campeón%": 0.0
-      },
-      "Arabia Saudí": {
-        "Grupos%": 19.1,
-        "1/32%": 4.8,
-        "1/16%": 0.9,
-        "Cuartos%": 0.2,
+        "Grupos%": 5.9,
+        "1/32%": 1.9,
+        "1/16%": 0.4,
+        "Cuartos%": 0.1,
         "Semis%": 0.0,
         "Campeón%": 0.0
       },
       "Egipto": {
-        "Grupos%": 63.8,
-        "1/32%": 20.8,
-        "1/16%": 6.6,
-        "Cuartos%": 1.6,
-        "Semis%": 0.3,
+        "Grupos%": 71.8,
+        "1/32%": 25.7,
+        "1/16%": 8.3,
+        "Cuartos%": 2.0,
+        "Semis%": 0.4,
         "Campeón%": 0.0
       },
       "Nueva Zelanda": {
-        "Grupos%": 24.4,
-        "1/32%": 5.2,
-        "1/16%": 1.0,
-        "Cuartos%": 0.2,
+        "Grupos%": 31.8,
+        "1/32%": 8.9,
+        "1/16%": 1.8,
+        "Cuartos%": 0.3,
+        "Semis%": 0.0,
+        "Campeón%": 0.0
+      },
+      "Cabo Verde": {
+        "Grupos%": 48.3,
+        "1/32%": 14.1,
+        "1/16%": 2.8,
+        "Cuartos%": 0.6,
+        "Semis%": 0.0,
+        "Campeón%": 0.0
+      },
+      "Arabia Saudí": {
+        "Grupos%": 34.9,
+        "1/32%": 11.9,
+        "1/16%": 2.6,
+        "Cuartos%": 0.5,
         "Semis%": 0.0,
         "Campeón%": 0.0
       },
       "Jordania": {
-        "Grupos%": 30.8,
-        "1/32%": 9.7,
-        "1/16%": 2.9,
+        "Grupos%": 10.4,
+        "1/32%": 4.0,
+        "1/16%": 1.3,
+        "Cuartos%": 0.3,
+        "Semis%": 0.0,
+        "Campeón%": 0.0
+      },
+      "Irak": {
+        "Grupos%": 6.0,
+        "1/32%": 2.0,
+        "1/16%": 0.5,
+        "Cuartos%": 0.1,
+        "Semis%": 0.0,
+        "Campeón%": 0.0
+      },
+      "Uzbekistán": {
+        "Grupos%": 26.6,
+        "1/32%": 8.3,
+        "1/16%": 2.8,
         "Cuartos%": 0.8,
         "Semis%": 0.1,
         "Campeón%": 0.0
       },
-      "Irak": {
-        "Grupos%": 14.3,
-        "1/32%": 4.1,
-        "1/16%": 1.1,
-        "Cuartos%": 0.2,
-        "Semis%": 0.0,
-        "Campeón%": 0.0
-      },
       "RD Congo": {
-        "Grupos%": 26.2,
-        "1/32%": 8.2,
-        "1/16%": 2.4,
-        "Cuartos%": 0.6,
+        "Grupos%": 41.7,
+        "1/32%": 13.9,
+        "1/16%": 4.2,
+        "Cuartos%": 1.2,
         "Semis%": 0.1,
         "Campeón%": 0.0
       },
       "Ghana": {
-        "Grupos%": 8.6,
-        "1/32%": 1.6,
-        "1/16%": 0.3,
-        "Cuartos%": 0.0,
+        "Grupos%": 40.5,
+        "1/32%": 7.5,
+        "1/16%": 1.5,
+        "Cuartos%": 0.2,
+        "Semis%": 0.0,
+        "Campeón%": 0.0
+      },
+      "Panamá": {
+        "Grupos%": 11.0,
+        "1/32%": 3.7,
+        "1/16%": 1.3,
+        "Cuartos%": 0.4,
         "Semis%": 0.0,
         "Campeón%": 0.0
       }
     },
     "elos": {
-      "España": 2157.0,
-      "Argentina": 2115.0,
-      "Francia": 2063.0,
-      "Inglaterra": 2024.0,
-      "Brasil": 1991.0,
-      "Portugal": 1989.0,
-      "Colombia": 1982.0,
-      "Países Bajos": 1948.0,
-      "Ecuador": 1938.0,
-      "Alemania": 1932.0,
-      "Noruega": 1914.0,
-      "Croacia": 1912.0,
-      "Turquía": 1911.0,
-      "Japón": 1906.0,
-      "Bélgica": 1894.0,
-      "Uruguay": 1892.0,
-      "Suiza": 1891.0,
-      "México": 1881.0,
-      "Senegal": 1860.0,
-      "Paraguay": 1834.0,
-      "Austria": 1830.0,
-      "Marruecos": 1827.0,
-      "Canadá": 1788.0,
-      "Corea del Sur": 1786.0,
-      "Escocia": 1782.0,
-      "Australia": 1777.0,
-      "Argelia": 1772.0,
-      "Irán": 1772.0,
-      "Panamá": 1730.0,
-      "EE.UU.": 1726.0,
-      "Uzbekistán": 1714.0,
-      "Rep. Checa": 1712.0,
-      "Suecia": 1712.0,
-      "Egipto": 1696.0,
-      "Costa de Marfil": 1695.0,
-      "Jordania": 1680.0,
-      "RD Congo": 1652.0,
-      "Túnez": 1628.0,
-      "Irak": 1607.0,
-      "Bosnia-Herz.": 1595.0,
-      "Cabo Verde": 1578.0,
-      "Arabia Saudí": 1576.0,
-      "Nueva Zelanda": 1562.0,
-      "Haití": 1548.0,
-      "Sudáfrica": 1511.0,
-      "Ghana": 1510.0,
-      "Curazao": 1434.0,
-      "Qatar": 1421.0
+      "España": 2129.0,
+      "Argentina": 2128.0,
+      "Francia": 2084.0,
+      "Inglaterra": 2055.0,
+      "Colombia": 1998.0,
+      "Brasil": 1986.0,
+      "Portugal": 1967.0,
+      "Países Bajos": 1944.0,
+      "Alemania": 1939.0,
+      "Noruega": 1929.0,
+      "Japón": 1910.0,
+      "México": 1896.0,
+      "Ecuador": 1890.0,
+      "Suiza": 1885.0,
+      "Croacia": 1881.0,
+      "Bélgica": 1879.0,
+      "Uruguay": 1870.0,
+      "Marruecos": 1866.0,
+      "Austria": 1857.0,
+      "Senegal": 1839.0,
+      "EE.UU.": 1820.0,
+      "Paraguay": 1816.0,
+      "Turquía": 1813.0,
+      "Australia": 1799.0,
+      "Canadá": 1777.0,
+      "Corea del Sur": 1771.0,
+      "Escocia": 1768.0,
+      "Argelia": 1759.0,
+      "Irán": 1756.0,
+      "Suecia": 1755.0,
+      "Costa de Marfil": 1743.0,
+      "Egipto": 1711.0,
+      "Uzbekistán": 1698.0,
+      "Rep. Checa": 1696.0,
+      "Panamá": 1683.0,
+      "RD Congo": 1674.0,
+      "Jordania": 1653.0,
+      "Cabo Verde": 1606.0,
+      "Arabia Saudí": 1598.0,
+      "Bosnia-Herz.": 1596.0,
+      "Irak": 1592.0,
+      "Túnez": 1585.0,
+      "Nueva Zelanda": 1578.0,
+      "Ghana": 1557.0,
+      "Haití": 1528.0,
+      "Sudáfrica": 1527.0,
+      "Qatar": 1437.0,
+      "Curazao": 1427.0
     }
   }
 }
