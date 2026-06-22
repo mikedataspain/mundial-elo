@@ -177,9 +177,11 @@ def simular_fase_grupos(
 
         # Generar resultados de 6 partidos × n_sims
         rand_all = rng.random((6, n_sims))   # shape (6, n_sims)
-        puntos = np.zeros((n_eq, n_sims), dtype=np.int32)
-        gf     = np.zeros((n_eq, n_sims), dtype=np.int32)   # goles a favor
-        gc     = np.zeros((n_eq, n_sims), dtype=np.int32)   # goles en contra
+        puntos       = np.zeros((n_eq, n_sims), dtype=np.int32)
+        gf           = np.zeros((n_eq, n_sims), dtype=np.int32)   # goles a favor (global)
+        gc           = np.zeros((n_eq, n_sims), dtype=np.int32)   # goles en contra (global)
+        h2h_pts_arr  = np.zeros((n_eq, n_eq, n_sims), dtype=np.int8)   # H2H: pts de i vs j
+        h2h_ga_arr   = np.zeros((n_eq, n_eq, n_sims), dtype=np.int8)   # H2H: goles de i vs j
 
         for match_i, (ia, ib) in enumerate(GROUP_MATCHUPS):
             key = frozenset({equipos_g[ia], equipos_g[ib]})
@@ -188,10 +190,20 @@ def simular_fase_grupos(
                 puntos[ia] += pts_map.get(equipos_g[ia], 0)
                 puntos[ib] += pts_map.get(equipos_g[ib], 0)
                 goles_map = pts_map.get("goles", {})
-                ga_r = goles_map.get(equipos_g[ia], 0)
-                gb_r = goles_map.get(equipos_g[ib], 0)
+                ga_r = int(goles_map.get(equipos_g[ia], 0))
+                gb_r = int(goles_map.get(equipos_g[ib], 0))
                 gf[ia] += ga_r;  gc[ia] += gb_r
                 gf[ib] += gb_r;  gc[ib] += ga_r
+                # H2H real: mismo resultado en todas las simulaciones
+                if ga_r > gb_r:
+                    h2h_pts_arr[ia, ib] = 3
+                elif ga_r == gb_r:
+                    h2h_pts_arr[ia, ib] = 1
+                    h2h_pts_arr[ib, ia] = 1
+                else:
+                    h2h_pts_arr[ib, ia] = 3
+                h2h_ga_arr[ia, ib] = ga_r
+                h2h_ga_arr[ib, ia] = gb_r
             else:
                 ea, eb = elos_g[ia], elos_g[ib]
                 pa, pd, _ = probabilidades_partido(ea, eb)
@@ -204,15 +216,36 @@ def simular_fase_grupos(
                 ga, gb = _simular_marcador(res_sim, ea - eb, rng)
                 gf[ia] += ga;  gc[ia] += gb
                 gf[ib] += gb;  gc[ib] += ga
+                # H2H simulado: varía por simulación
+                h2h_pts_arr[ia, ib] = np.where(a_gana, 3, np.where(empate, 1, 0)).astype(np.int8)
+                h2h_pts_arr[ib, ia] = np.where(b_gana, 3, np.where(empate, 1, 0)).astype(np.int8)
+                h2h_ga_arr[ia, ib]  = np.minimum(ga, 127).astype(np.int8)
+                h2h_ga_arr[ib, ia]  = np.minimum(gb, 127).astype(np.int8)
 
-        # Desempate: puntos → GD → GF → Elo (criterio fraccional final)
-        gd = gf - gc   # (n_eq, n_sims), puede ser negativo
-        elo_tiebreak = elos_g / 1_000_000.0
+        # Desempate FIFA: puntos → H2H pts → H2H GD → H2H GF → GD global → GF global
+        gd = gf - gc
+
+        # Máscara de emparejados en puntos (excluyendo diagonal)
+        pts_i  = puntos[:, np.newaxis, :]        # (4, 1, n_sims)
+        pts_j  = puntos[np.newaxis, :, :]        # (1, 4, n_sims)
+        tied   = (pts_i == pts_j)                # (4, 4, n_sims)
+        tied  &= ~np.eye(n_eq, dtype=bool)[:, :, np.newaxis]
+
+        h2h_i32  = h2h_pts_arr.astype(np.int32)
+        h2h_ga32 = h2h_ga_arr.astype(np.int32)
+        h2h_gd32 = h2h_ga32 - h2h_ga32.transpose(1, 0, 2)   # goles_i_vs_j - goles_j_vs_i
+
+        h2h_eff_pts = (h2h_i32  * tied).sum(axis=1)   # (4, n_sims)
+        h2h_eff_gd  = (h2h_gd32 * tied).sum(axis=1)   # (4, n_sims), puede ser negativo
+        h2h_eff_gf  = (h2h_ga32 * tied).sum(axis=1)   # (4, n_sims)
+
         scores = (
-            puntos.astype(np.float64) * 1e7
-            + (gd + 200).astype(np.float64) * 1e4   # +200 para evitar negativos
-            + gf.astype(np.float64) * 1e2
-            + elo_tiebreak[:, np.newaxis]
+            puntos.astype(np.float64)      * 1e15
+            + h2h_eff_pts.astype(np.float64) * 1e13
+            + (h2h_eff_gd + 60).astype(np.float64) * 1e10
+            + h2h_eff_gf.astype(np.float64)  * 1e7
+            + (gd + 200).astype(np.float64)  * 1e4
+            + gf.astype(np.float64)           * 1e1
         )
 
         # Ordenar de mayor a menor (argsort inverso)
