@@ -84,6 +84,48 @@ def _fetch_dia_espn(fecha_yyyymmdd: str) -> list[tuple[str, str, int, int, int, 
     return partidos
 
 
+def _fetch_dia_espn_playoff(fecha_yyyymmdd: str) -> list[tuple[str, str, str]]:
+    """
+    Obtiene partidos eliminatorios terminados de un día.
+    Devuelve lista de (eq1_es, eq2_es, nombre_ganador_es).
+    Usa el campo 'winner' de ESPN en lugar de comparar goles
+    (partidos que van a penaltis terminan 1-1 en el marcador normal).
+    """
+    url = (
+        "https://site.api.espn.com/apis/site/v2/sports/soccer"
+        f"/fifa.world/scoreboard?dates={fecha_yyyymmdd}"
+    )
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode())
+    except Exception as exc:
+        logger.warning("ESPN API no disponible para %s: %s", fecha_yyyymmdd, exc)
+        return []
+
+    partidos = []
+    for event in data.get("events", []):
+        if event.get("status", {}).get("type", {}).get("state", "") != "post":
+            continue
+        comps = event.get("competitions", [{}])[0].get("competitors", [])
+        if len(comps) != 2:
+            continue
+
+        ganador_nombre = None
+        nombres = []
+        for c in comps:
+            nombre_es = _espn_a_castellano(c.get("team", {}).get("displayName", ""))
+            nombres.append(nombre_es)
+            if c.get("winner"):
+                ganador_nombre = nombre_es
+
+        if len(nombres) == 2 and ganador_nombre:
+            partidos.append((nombres[0], nombres[1], ganador_nombre))
+            logger.debug("ESPN KO: %s vs %s → ganador %s", nombres[0], nombres[1], ganador_nombre)
+
+    return partidos
+
+
 def obtener_resultados_playoff(
     fecha_hoy: Optional[date] = None,
 ) -> dict:
@@ -99,7 +141,6 @@ def obtener_resultados_playoff(
     if fecha_hoy is None:
         fecha_hoy = date.today()
 
-    # Primera fecha de dieciseisavos; ajustar si el calendario varía
     from datetime import date as _date, timedelta
     inicio_playoff = _date(2026, 6, 28)
 
@@ -109,10 +150,8 @@ def obtener_resultados_playoff(
     resultados: dict = {}
     dia = inicio_playoff
     while dia <= fecha_hoy:
-        for eq1, eq2, pts1, pts2, g1, g2 in _fetch_dia_espn(dia.strftime("%Y%m%d")):
-            key = frozenset({eq1, eq2})
-            ganador = eq1 if g1 > g2 else eq2
-            resultados[key] = ganador
+        for eq1, eq2, ganador in _fetch_dia_espn_playoff(dia.strftime("%Y%m%d")):
+            resultados[frozenset({eq1, eq2})] = ganador
         dia += timedelta(days=1)
 
     if resultados:
