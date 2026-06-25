@@ -23,6 +23,7 @@ from equivalencias import GRUPOS, EQUIPOS_MUNDIAL_48
 from fixtures import get_calendario
 from modelo import calcular_probabilidades_fase_grupos, simular_torneo_completo
 from resultados import obtener_resultados_jugados, obtener_resultados_playoff
+from snapshot import generar_snapshot
 from scraper import obtener_elos_con_fallback
 from validacion import (
     cargar_elos_anteriores,
@@ -81,6 +82,13 @@ def main():
     repo_root = Path(__file__).parent
     shutil.copy(CSV_PRONOSTICADOR, repo_root / "data.csv")
     logger.info(f"data.csv actualizado → {repo_root / 'data.csv'}")
+
+    # Snapshot diario de la tabla
+    snap_path = repo_root / "snapshots" / f"{hoy}.png"
+    try:
+        generar_snapshot(df, hoy, snap_path)
+    except Exception as exc:
+        logger.warning(f"Snapshot no generado (no bloquea el pipeline): {exc}")
 
     # 5. Guardar caché para la siguiente ejecución
     guardar_elos_cache(elos, fecha=fecha_ratings)
