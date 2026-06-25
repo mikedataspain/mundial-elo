@@ -281,11 +281,13 @@ def seleccionar_mejores_terceros(
     res_grupos: dict,
     elos: dict[str, float],
     n_mejores: int = 8,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Por cada simulación selecciona los n_mejores 3ºs de los 12 grupos.
-    Devuelve array (n_mejores, n_sims) con índices globales, ordenados
-    por puntos desc → Elo desc.
+    Devuelve:
+      mejores_idx  (n_mejores, n_sims) — índices globales de equipo
+      mejores_grp  (n_mejores, n_sims) — índice de grupo (0=A … 11=L)
+    ordenados por puntos desc → GD → GF → Elo desc.
     """
     lista_grupos = list(grupos.keys())
     n_sims = res_grupos["n_sims"]
@@ -297,6 +299,7 @@ def seleccionar_mejores_terceros(
     gf_mat  = np.zeros((12, n_sims), dtype=np.int32)
     elo_mat = np.zeros((12, n_sims), dtype=np.float64)
     idx_mat = np.zeros((12, n_sims), dtype=np.int32)
+    grp_mat = np.zeros((12, n_sims), dtype=np.int8)   # índice de grupo 0-11
 
     elos_arr = np.array([elos.get(eq_nombre[j], 1500.0) for j in range(len(eq_nombre))])
 
@@ -307,8 +310,9 @@ def seleccionar_mejores_terceros(
         gd_mat[i]   = res_grupos["terceros_gd"][grupo]
         gf_mat[i]   = res_grupos["terceros_gf"][grupo]
         elo_mat[i]  = elos_arr[idx]
+        grp_mat[i]  = i
 
-    # Desempate: puntos → GD → GF → Elo (igual que en fase de grupos)
+    # Desempate: puntos → GD → GF → Elo
     scores = (
         pts_mat.astype(np.float64) * 1e7
         + (gd_mat + 200).astype(np.float64) * 1e4
@@ -316,36 +320,54 @@ def seleccionar_mejores_terceros(
         + elo_mat
     )
 
-    # Ordenar descendente y tomar top-n_mejores
+    sims_idx = np.arange(n_sims)
     ranking = np.argsort(-scores, axis=0)[:n_mejores]   # (n_mejores, n_sims)
-    mejores_idx = idx_mat[ranking, np.arange(n_sims)[np.newaxis, :]]   # (n_mejores, n_sims)
+    mejores_idx = idx_mat[ranking, sims_idx[np.newaxis, :]]   # (n_mejores, n_sims)
+    mejores_grp = grp_mat[ranking, sims_idx[np.newaxis, :]]   # (n_mejores, n_sims)
 
-    return mejores_idx   # (8, n_sims)
+    return mejores_idx, mejores_grp
 
 
 # ---------------------------------------------------------------------------
 # 4. SIMULACIÓN ELIMINATORIAS
 # ---------------------------------------------------------------------------
 
-# Emparejamientos R32 entre grupos opuestos (1º vs 2º)
-CRUCES_R32 = [
-    ("A", 1, "C", 2),   # 1ºA vs 2ºC
-    ("C", 1, "A", 2),   # 1ºC vs 2ºA
-    ("B", 1, "D", 2),
-    ("D", 1, "B", 2),
-    ("E", 1, "G", 2),
-    ("G", 1, "E", 2),
-    ("F", 1, "H", 2),
-    ("H", 1, "F", 2),
-    ("I", 1, "K", 2),
-    ("K", 1, "I", 2),
-    ("J", 1, "L", 2),
-    ("L", 1, "J", 2),
-    # 4 partidos entre mejores 3ºs (índices 0-7 del array mejores_terceros)
-    # M12: 3º[0] vs 3º[1]
-    # M13: 3º[2] vs 3º[3]
-    # M14: 3º[4] vs 3º[5]
-    # M15: 3º[6] vs 3º[7]
+# Cuadro oficial del Mundial 2026 (32 slots = 16 cruces × 2 equipos).
+# Cada slot es ("g", grupo, posición) o ("t3", subconjunto_grupos).
+# Orden: los cruces 0-1 alimentan el octavo P89, 2-3 → P90, ..., 14-15 → P96.
+SLOTS_R32: list[tuple] = [
+    # Cruce P74: 1ºE vs mejor 3º(A,B,C,D,F)
+    ("g", "E", 1), ("t3", "ABCDF"),
+    # Cruce P77: 1ºI vs mejor 3º(C,D,F,G,H)
+    ("g", "I", 1), ("t3", "CDFGH"),
+    # Cruce P73: 2ºA vs 2ºB  ← RSA vs CAN ya confirmado
+    ("g", "A", 2), ("g", "B", 2),
+    # Cruce P75: 1ºF vs 2ºC
+    ("g", "F", 1), ("g", "C", 2),
+    # Cruce P83: 2ºK vs 2ºL
+    ("g", "K", 2), ("g", "L", 2),
+    # Cruce P84: 1ºH vs 2ºJ
+    ("g", "H", 1), ("g", "J", 2),
+    # Cruce P81: 1ºD vs mejor 3º(B,E,F,I,J)
+    ("g", "D", 1), ("t3", "BEFIJ"),
+    # Cruce P82: 1ºG vs mejor 3º(A,E,H,I,J)
+    ("g", "G", 1), ("t3", "AEHIJ"),
+    # Cruce P76: 1ºC vs 2ºF
+    ("g", "C", 1), ("g", "F", 2),
+    # Cruce P78: 2ºE vs 2ºI
+    ("g", "E", 2), ("g", "I", 2),
+    # Cruce P79: 1ºA vs mejor 3º(C,E,F,H,I)
+    ("g", "A", 1), ("t3", "CEFHI"),
+    # Cruce P80: 1ºL vs mejor 3º(E,H,I,J,K)
+    ("g", "L", 1), ("t3", "EHIJK"),
+    # Cruce P86: 1ºJ vs 2ºH
+    ("g", "J", 1), ("g", "H", 2),
+    # Cruce P88: 2ºD vs 2ºG
+    ("g", "D", 2), ("g", "G", 2),
+    # Cruce P85: 1ºB vs mejor 3º(E,F,G,I,J)
+    ("g", "B", 1), ("t3", "EFGIJ"),
+    # Cruce P87: 1ºK vs mejor 3º(D,E,I,J,L)
+    ("g", "K", 1), ("t3", "DEIJL"),
 ]
 
 # Bracket completo R32 → R16 → QF → SF → F
@@ -383,6 +405,7 @@ def simular_torneo_completo(
     n_sims:  int = N_SIMULACIONES,
     seed:    Optional[int] = None,
     resultados_reales: Optional[dict] = None,
+    resultados_reales_playoff: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
     Simula el torneo completo (grupos + eliminatorias) n_sims veces.
@@ -418,44 +441,104 @@ def simular_torneo_completo(
         for idx_arr in [res["clasificados_1"][g], res["clasificados_2"][g]]:
             np.add.at(cnt_grupos, idx_arr, 1)
 
-    mejores_3 = seleccionar_mejores_terceros(grupos, res, elos)   # (8, n_sims)
+    mejores_3, mejores_grp = seleccionar_mejores_terceros(grupos, res, elos)
     for row in range(8):
         np.add.at(cnt_grupos, mejores_3[row], 1)
 
+    # --- Asignar las 8 mejores 3ªs a sus 8 slots t3 del cuadro ---
+    # Cada slot t3 acepta la mejor 3ª cuyo grupo esté en el subconjunto.
+    # Procesamos en orden; si hay empate de cobertura, el mejor-ranked gana.
+    grp_letra_a_idx = {g: i for i, g in enumerate(lista_grupos)}
+
+    t3_slot_defs = [
+        (i, s[1]) for i, s in enumerate(SLOTS_R32) if s[0] == "t3"
+    ]  # [(índice_en_SLOTS_R32, subconjunto_str), ...]
+
+    assigned   = np.zeros((8, n_sims), dtype=bool)
+    t3_filled  = {}   # índice_en_SLOTS_R32 → array (n_sims,) de idx global
+
+    for slot_idx, subset_str in t3_slot_defs:
+        subset_idxs = {grp_letra_a_idx[g] for g in subset_str}
+        in_subset = np.isin(mejores_grp.astype(int), list(subset_idxs))  # (8, n_sims)
+        available = in_subset & ~assigned
+
+        chosen_rank = np.full(n_sims, -1, dtype=np.int32)
+        for rank in range(8):
+            can_use = available[rank] & (chosen_rank < 0)
+            chosen_rank = np.where(can_use, rank, chosen_rank)
+
+        # Fallback: si ningún grupo coincide (no debería ocurrir) usar el mejor libre
+        no_match = chosen_rank < 0
+        if no_match.any():
+            for rank in range(8):
+                fallback = no_match & ~assigned[rank]
+                chosen_rank = np.where(fallback & (chosen_rank < 0), rank, chosen_rank)
+                no_match = chosen_rank < 0
+
+        chosen_team = mejores_3[0].copy()
+        for rank in range(8):
+            chosen_team = np.where(chosen_rank == rank, mejores_3[rank], chosen_team)
+
+        for rank in range(8):
+            assigned[rank] |= (chosen_rank == rank)
+
+        t3_filled[slot_idx] = chosen_team
+
     # --- Construir 32 slots del bracket: (32, n_sims) ---
     bracket = np.zeros((32, n_sims), dtype=np.int32)
-
-    # Slots 0-23: 12 cruces 1º×2º
-    slot = 0
-    for ga, pos_a, gb, pos_b in CRUCES_R32:
-        src_a = res["clasificados_1"][ga] if pos_a == 1 else res["clasificados_2"][ga]
-        src_b = res["clasificados_1"][gb] if pos_b == 1 else res["clasificados_2"][gb]
-        bracket[slot]     = src_a
-        bracket[slot + 1] = src_b
-        slot += 2
-
-    # Slots 24-31: 8 mejores terceros (4 partidos)
-    for k in range(8):
-        bracket[24 + k] = mejores_3[k]
+    for slot_idx, slot_def in enumerate(SLOTS_R32):
+        if slot_def[0] == "g":
+            _, grupo, pos = slot_def
+            src = res["clasificados_1"][grupo] if pos == 1 else res["clasificados_2"][grupo]
+            bracket[slot_idx] = src
+        else:
+            bracket[slot_idx] = t3_filled[slot_idx]
 
     # --- R32 (16 partidos) ---
     winners_r32 = np.zeros((16, n_sims), dtype=np.int32)
     for m in range(16):
-        w = _simular_knockout_match(bracket[2*m], bracket[2*m+1], elos_arr, rng)
+        slot_a, slot_b = bracket[2 * m], bracket[2 * m + 1]
+        w = _simular_knockout_match(slot_a, slot_b, elos_arr, rng)
+
+        # Si el partido ya se jugó (ambos equipos deterministas), usar resultado real
+        if resultados_reales_playoff:
+            ua = np.unique(slot_a)
+            ub = np.unique(slot_b)
+            if len(ua) == 1 and len(ub) == 1:
+                key = frozenset({todos[ua[0]], todos[ub[0]]})
+                if key in resultados_reales_playoff:
+                    gan_nombre = resultados_reales_playoff[key]
+                    gan_idx    = eq_idx[gan_nombre]
+                    w = np.full(n_sims, gan_idx, dtype=np.int32)
+
         winners_r32[m] = w
         np.add.at(cnt_r32, w, 1)
 
     # --- R16 (8 partidos) ---
     winners_r16 = np.zeros((8, n_sims), dtype=np.int32)
     for i, (ma, mb) in enumerate(BRACKET_R16):
-        w = _simular_knockout_match(winners_r32[ma], winners_r32[mb], elos_arr, rng)
+        sa, sb = winners_r32[ma], winners_r32[mb]
+        w = _simular_knockout_match(sa, sb, elos_arr, rng)
+        if resultados_reales_playoff:
+            ua, ub = np.unique(sa), np.unique(sb)
+            if len(ua) == 1 and len(ub) == 1:
+                key = frozenset({todos[ua[0]], todos[ub[0]]})
+                if key in resultados_reales_playoff:
+                    w = np.full(n_sims, eq_idx[resultados_reales_playoff[key]], dtype=np.int32)
         winners_r16[i] = w
         np.add.at(cnt_r16, w, 1)
 
     # --- Cuartos (4 partidos) ---
     winners_qf = np.zeros((4, n_sims), dtype=np.int32)
     for i, (ma, mb) in enumerate(BRACKET_QF):
-        w = _simular_knockout_match(winners_r16[ma], winners_r16[mb], elos_arr, rng)
+        sa, sb = winners_r16[ma], winners_r16[mb]
+        w = _simular_knockout_match(sa, sb, elos_arr, rng)
+        if resultados_reales_playoff:
+            ua, ub = np.unique(sa), np.unique(sb)
+            if len(ua) == 1 and len(ub) == 1:
+                key = frozenset({todos[ua[0]], todos[ub[0]]})
+                if key in resultados_reales_playoff:
+                    w = np.full(n_sims, eq_idx[resultados_reales_playoff[key]], dtype=np.int32)
         winners_qf[i] = w
         np.add.at(cnt_qf, w, 1)
 

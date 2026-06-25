@@ -84,6 +84,42 @@ def _fetch_dia_espn(fecha_yyyymmdd: str) -> list[tuple[str, str, int, int, int, 
     return partidos
 
 
+def obtener_resultados_playoff(
+    fecha_hoy: Optional[date] = None,
+) -> dict:
+    """
+    Obtiene resultados ya jugados de la fase eliminatoria (R32 en adelante).
+    Consulta la ESPN API en las fechas de eliminatorias hasta hoy.
+
+    Retorna:
+        {frozenset({eq1, eq2}): nombre_ganador}
+
+    Si ESPN no devuelve resultados, devuelve dict vacío (el modelo simula todo).
+    """
+    if fecha_hoy is None:
+        fecha_hoy = date.today()
+
+    # Primera fecha de dieciseisavos; ajustar si el calendario varía
+    from datetime import date as _date, timedelta
+    inicio_playoff = _date(2026, 6, 28)
+
+    if fecha_hoy < inicio_playoff:
+        return {}
+
+    resultados: dict = {}
+    dia = inicio_playoff
+    while dia <= fecha_hoy:
+        for eq1, eq2, pts1, pts2, g1, g2 in _fetch_dia_espn(dia.strftime("%Y%m%d")):
+            key = frozenset({eq1, eq2})
+            ganador = eq1 if g1 > g2 else eq2
+            resultados[key] = ganador
+        dia += timedelta(days=1)
+
+    if resultados:
+        logger.info("Resultados playoff: %d partidos obtenidos de ESPN.", len(resultados))
+    return resultados
+
+
 def obtener_resultados_jugados(
     calendario: list[dict],
     fecha_hoy: Optional[date] = None,
