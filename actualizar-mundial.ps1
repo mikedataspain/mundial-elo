@@ -15,6 +15,12 @@ if (-not (Test-Path $origen)) {
 Copy-Item $origen -Destination $destino -Force
 Write-Host "CSV copiado correctamente."
 
+# Generar snapshot del día
+py "$repo\generar_snapshot_csv.py"
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Snapshot no generado (no bloquea la subida)."
+}
+
 # Subir a GitHub
 Set-Location $repo
 git pull --rebase --autostash origin main
@@ -23,7 +29,7 @@ if ($LASTEXITCODE -ne 0) {
     git rebase --abort
     exit 1
 }
-git add data.csv
+git add data.csv snapshots/
 $fecha = Get-Date -Format "yyyy-MM-dd HH:mm"
 git commit -m "Actualización automática $fecha"
 git push origin main
