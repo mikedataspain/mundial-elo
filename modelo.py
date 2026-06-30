@@ -494,9 +494,39 @@ def simular_torneo_completo(
         else:
             bracket[slot_idx] = t3_filled[slot_idx]
 
+    # --- Forzar emparejamientos R32 ya jugados en el bracket ---
+    # Si un slot de R32 es determinístico (mismo equipo en todas las sims) y
+    # conocemos su oponente real, forzamos el otro slot al oponente real.
+    # Esto garantiza que el equipo eliminado tenga 0% en todas las rondas siguientes,
+    # incluso cuando el oponente venía de un slot t3 no determinístico aún.
+    if resultados_reales_playoff:
+        for key_set, gan_nombre in resultados_reales_playoff.items():
+            nombres_par = list(key_set)
+            idxs_par = [eq_idx.get(n) for n in nombres_par]
+            if None in idxs_par or len(idxs_par) != 2:
+                continue
+            ia, ib = idxs_par[0], idxs_par[1]
+            for m in range(16):
+                sa, sb = bracket[2 * m], bracket[2 * m + 1]
+                if np.all(sa == ia):
+                    bracket[2 * m + 1] = np.full(n_sims, ib, dtype=np.int32)
+                    logger.info("Bracket R32-M%d forzado: %s vs %s", m, todos[ia], todos[ib])
+                    break
+                elif np.all(sa == ib):
+                    bracket[2 * m + 1] = np.full(n_sims, ia, dtype=np.int32)
+                    logger.info("Bracket R32-M%d forzado: %s vs %s", m, todos[ib], todos[ia])
+                    break
+                elif np.all(sb == ia):
+                    bracket[2 * m] = np.full(n_sims, ib, dtype=np.int32)
+                    logger.info("Bracket R32-M%d forzado: %s vs %s", m, todos[ib], todos[ia])
+                    break
+                elif np.all(sb == ib):
+                    bracket[2 * m] = np.full(n_sims, ia, dtype=np.int32)
+                    logger.info("Bracket R32-M%d forzado: %s vs %s", m, todos[ia], todos[ib])
+                    break
+
     # Pre-construir lookup de resultados playoff: (idx_menor, idx_mayor) → gan_idx
-    # Permite bloquear por simulación individual, no solo cuando el slot es uniforme.
-    # Necesario cuando uno de los slots es un t3 (varía entre simulaciones).
+    # Aplica el ganador real simulación a simulación con mask (cubre todas las rondas).
     _playoff_idx: dict[tuple, int] = {}
     if resultados_reales_playoff:
         for key_set, gan_nombre in resultados_reales_playoff.items():
@@ -579,6 +609,24 @@ def simular_torneo_completo(
     r = rng.random(n_sims)
     campeon = np.where(r < we_a, ta, tb)
     np.add.at(cnt_campeon, campeon, 1)
+
+    # --- Corrección post-hoc de conteos para resultados playoff conocidos ---
+    # El forzado del bracket puede causar que el ganador aparezca en dos slots
+    # simultáneamente (el forzado + su slot t3 original), inflando su cnt_r32 > n_sims.
+    # También garantizamos que los perdedores tengan exactamente 0 en todas las rondas.
+    if resultados_reales_playoff:
+        for key_set, gan_nombre in resultados_reales_playoff.items():
+            nombres_par = list(key_set)
+            gan_idx_pp = eq_idx.get(gan_nombre)
+            per_nombre = next((n for n in nombres_par if n != gan_nombre), None)
+            per_idx_pp = eq_idx.get(per_nombre) if per_nombre else None
+            if gan_idx_pp is None or per_idx_pp is None:
+                continue
+            # Perdedor: 0 en todas las rondas eliminatorias
+            for cnt in (cnt_r32, cnt_r16, cnt_qf, cnt_sf, cnt_campeon):
+                cnt[per_idx_pp] = 0
+            # Ganador: cap a n_sims por si acaso (evita >100% por doble slot)
+            cnt_r32[gan_idx_pp] = min(cnt_r32[gan_idx_pp], n_sims)
 
     # --- Construir DataFrame de resultados ---
     df = pd.DataFrame({
