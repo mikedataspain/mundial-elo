@@ -494,23 +494,43 @@ def simular_torneo_completo(
         else:
             bracket[slot_idx] = t3_filled[slot_idx]
 
+    # Pre-construir lookup de resultados playoff: (idx_menor, idx_mayor) → gan_idx
+    # Permite bloquear por simulación individual, no solo cuando el slot es uniforme.
+    # Necesario cuando uno de los slots es un t3 (varía entre simulaciones).
+    _playoff_idx: dict[tuple, int] = {}
+    if resultados_reales_playoff:
+        for key_set, gan_nombre in resultados_reales_playoff.items():
+            nombres_par = list(key_set)
+            if gan_nombre not in eq_idx:
+                logger.warning("Ganador playoff '%s' no encontrado en eq_idx", gan_nombre)
+                continue
+            idxs = [eq_idx.get(n) for n in nombres_par]
+            if None in idxs:
+                logger.warning("Equipo playoff no encontrado en eq_idx: %s", nombres_par)
+                continue
+            pair = (min(idxs), max(idxs))
+            _playoff_idx[pair] = eq_idx[gan_nombre]
+
+    def _aplicar_resultado_real(
+        w: np.ndarray,
+        slot_a: np.ndarray,
+        slot_b: np.ndarray,
+    ) -> np.ndarray:
+        """Para cada simulación donde los dos equipos coinciden con un resultado conocido,
+        fuerza el ganador real. Funciona aunque los slots no sean uniformes (t3)."""
+        for (ia, ib), gan_idx in _playoff_idx.items():
+            mask = ((slot_a == ia) & (slot_b == ib)) | ((slot_a == ib) & (slot_b == ia))
+            if mask.any():
+                w = np.where(mask, gan_idx, w)
+        return w
+
     # --- R32 (16 partidos) ---
     winners_r32 = np.zeros((16, n_sims), dtype=np.int32)
     for m in range(16):
         slot_a, slot_b = bracket[2 * m], bracket[2 * m + 1]
         w = _simular_knockout_match(slot_a, slot_b, elos_arr, rng)
-
-        # Si el partido ya se jugó (ambos equipos deterministas), usar resultado real
-        if resultados_reales_playoff:
-            ua = np.unique(slot_a)
-            ub = np.unique(slot_b)
-            if len(ua) == 1 and len(ub) == 1:
-                key = frozenset({todos[ua[0]], todos[ub[0]]})
-                if key in resultados_reales_playoff:
-                    gan_nombre = resultados_reales_playoff[key]
-                    gan_idx    = eq_idx[gan_nombre]
-                    w = np.full(n_sims, gan_idx, dtype=np.int32)
-
+        if _playoff_idx:
+            w = _aplicar_resultado_real(w, slot_a, slot_b)
         winners_r32[m] = w
         np.add.at(cnt_r32, w, 1)
 
@@ -519,12 +539,8 @@ def simular_torneo_completo(
     for i, (ma, mb) in enumerate(BRACKET_R16):
         sa, sb = winners_r32[ma], winners_r32[mb]
         w = _simular_knockout_match(sa, sb, elos_arr, rng)
-        if resultados_reales_playoff:
-            ua, ub = np.unique(sa), np.unique(sb)
-            if len(ua) == 1 and len(ub) == 1:
-                key = frozenset({todos[ua[0]], todos[ub[0]]})
-                if key in resultados_reales_playoff:
-                    w = np.full(n_sims, eq_idx[resultados_reales_playoff[key]], dtype=np.int32)
+        if _playoff_idx:
+            w = _aplicar_resultado_real(w, sa, sb)
         winners_r16[i] = w
         np.add.at(cnt_r16, w, 1)
 
@@ -533,12 +549,8 @@ def simular_torneo_completo(
     for i, (ma, mb) in enumerate(BRACKET_QF):
         sa, sb = winners_r16[ma], winners_r16[mb]
         w = _simular_knockout_match(sa, sb, elos_arr, rng)
-        if resultados_reales_playoff:
-            ua, ub = np.unique(sa), np.unique(sb)
-            if len(ua) == 1 and len(ub) == 1:
-                key = frozenset({todos[ua[0]], todos[ub[0]]})
-                if key in resultados_reales_playoff:
-                    w = np.full(n_sims, eq_idx[resultados_reales_playoff[key]], dtype=np.int32)
+        if _playoff_idx:
+            w = _aplicar_resultado_real(w, sa, sb)
         winners_qf[i] = w
         np.add.at(cnt_qf, w, 1)
 
@@ -552,6 +564,10 @@ def simular_torneo_completo(
         r = rng.random(n_sims)
         w = np.where(r < we_a, ta, tb)
         l = np.where(r < we_a, tb, ta)
+        if _playoff_idx:
+            w_orig = w.copy()
+            w = _aplicar_resultado_real(w, ta, tb)
+            l = np.where(w != w_orig, np.where(w == ta, tb, ta), l)
         winners_sf[i] = w
         losers_sf[i]  = l
         np.add.at(cnt_sf, w, 1)
