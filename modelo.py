@@ -494,40 +494,12 @@ def simular_torneo_completo(
         else:
             bracket[slot_idx] = t3_filled[slot_idx]
 
-    # --- Forzar emparejamientos R32 ya jugados en el bracket (solo g-vs-g) ---
-    # Cuando AMBOS slots de un partido son determinísticos (g-slots, mismo equipo
-    # en todas las simulaciones) y coinciden con un resultado conocido, los
-    # forzamos explícitamente. Esto cubre partidos como 2A vs 2B, 1C vs 2F, etc.
-    # Para partidos g-vs-t3 (un slot es t3 no determinístico), NO forzamos el
-    # bracket: el t3_filled puede poner un equipo diferente en ese slot según la
-    # simulación, causando colisiones (e.g. Ecuador en el slot de Alemania).
-    # Esos partidos se corrigen post-hoc directamente sobre los contadores.
-    if resultados_reales_playoff:
-        for key_set, gan_nombre in resultados_reales_playoff.items():
-            nombres_par = list(key_set)
-            idxs_par = [eq_idx.get(n) for n in nombres_par]
-            if None in idxs_par or len(idxs_par) != 2:
-                continue
-            ia, ib = idxs_par[0], idxs_par[1]
-            for m in range(16):
-                sa, sb = bracket[2 * m], bracket[2 * m + 1]
-                sa_uniq = np.unique(sa)
-                sb_uniq = np.unique(sb)
-                # Solo actuar si AMBOS slots son determinísticos (g-g match)
-                if len(sa_uniq) != 1 or len(sb_uniq) != 1:
-                    continue
-                sa_val, sb_val = sa_uniq[0], sb_uniq[0]
-                if {sa_val, sb_val} == {ia, ib}:
-                    # Ambos slots ya tienen los equipos correctos — solo aseguramos
-                    # que el slot del ganador será correcto vía _aplicar_resultado_real
-                    logger.info("Bracket R32-M%d confirmado: %s vs %s", m, todos[sa_val], todos[sb_val])
-                    break
-
     # Pre-construir lookup de resultados playoff: (idx_menor, idx_mayor) → gan_idx
-    # Aplica el ganador real simulación a simulación con mask (cubre todas las rondas).
+    # Aplica el ganador real simulación a simulación con máscara (cubre todas las rondas).
     _playoff_idx: dict[tuple, int] = {}
     if resultados_reales_playoff:
-        for key_set, gan_nombre in resultados_reales_playoff.items():
+        for key_set, info in resultados_reales_playoff.items():
+            gan_nombre = info["ganador"]
             nombres_par = list(key_set)
             if gan_nombre not in eq_idx:
                 logger.warning("Ganador playoff '%s' no encontrado en eq_idx", gan_nombre)
@@ -544,13 +516,42 @@ def simular_torneo_completo(
         slot_a: np.ndarray,
         slot_b: np.ndarray,
     ) -> np.ndarray:
-        """Para cada simulación donde los dos equipos coinciden con un resultado conocido,
+        """Por cada sim donde los dos equipos coinciden con resultado conocido,
         fuerza el ganador real. Funciona aunque los slots no sean uniformes (t3)."""
         for (ia, ib), gan_idx in _playoff_idx.items():
             mask = ((slot_a == ia) & (slot_b == ib)) | ((slot_a == ib) & (slot_b == ia))
             if mask.any():
                 w = np.where(mask, gan_idx, w)
         return w
+
+    def _forzar_ganador_en_ronda(
+        winners: np.ndarray,
+        slots_a: np.ndarray,
+        slots_b: np.ndarray,
+        gan_idx_f: int,
+        per_idx_f: int,
+        etiqueta: str,
+    ) -> None:
+        """Fuerza el ganador confirmado en TODAS las sims del partido correspondiente.
+        Busca el partido donde al menos un slot es determinístico y contiene al ganador
+        o perdedor. Necesario para que las rondas posteriores reciban los equipos correctos
+        incluso cuando el t3 no fue uniforme (partidos g-vs-t3)."""
+        for m in range(len(winners)):
+            sa, sb = slots_a[m], slots_b[m]
+            sa_uniq = np.unique(sa)
+            sb_uniq = np.unique(sb)
+            sa_fijo = len(sa_uniq) == 1 and sa_uniq[0] in (gan_idx_f, per_idx_f)
+            sb_fijo = len(sb_uniq) == 1 and sb_uniq[0] in (gan_idx_f, per_idx_f)
+            if not (sa_fijo or sb_fijo):
+                continue
+            otro_tiene = (
+                np.any((sb == gan_idx_f) | (sb == per_idx_f)) if sa_fijo
+                else np.any((sa == gan_idx_f) | (sa == per_idx_f))
+            )
+            if otro_tiene:
+                winners[m][:] = gan_idx_f
+                logger.info("%s ganador forzado en partido %d", etiqueta, m)
+                break
 
     # --- R32 (16 partidos) ---
     winners_r32 = np.zeros((16, n_sims), dtype=np.int32)
@@ -562,6 +563,25 @@ def simular_torneo_completo(
         winners_r32[m] = w
         np.add.at(cnt_r32, w, 1)
 
+    # Forzar winners_r32 para todos los resultados R32 confirmados.
+    # Garantiza que R16 reciba los equipos correctos aunque el t3 no fuera uniforme.
+    if resultados_reales_playoff:
+        slots_a_r32 = bracket[0::2]
+        slots_b_r32 = bracket[1::2]
+        for key_set, info in resultados_reales_playoff.items():
+            if info["ronda"] != "R32":
+                continue
+            gan_nombre = info["ganador"]
+            gan_idx_f = eq_idx.get(gan_nombre)
+            per_nombre = next((n for n in key_set if n != gan_nombre), None)
+            per_idx_f = eq_idx.get(per_nombre) if per_nombre else None
+            if gan_idx_f is None or per_idx_f is None:
+                continue
+            _forzar_ganador_en_ronda(
+                winners_r32, slots_a_r32, slots_b_r32,
+                gan_idx_f, per_idx_f, "R32",
+            )
+
     # --- R16 (8 partidos) ---
     winners_r16 = np.zeros((8, n_sims), dtype=np.int32)
     for i, (ma, mb) in enumerate(BRACKET_R16):
@@ -572,6 +592,23 @@ def simular_torneo_completo(
         winners_r16[i] = w
         np.add.at(cnt_r16, w, 1)
 
+    if resultados_reales_playoff:
+        slots_a_r16 = np.array([winners_r32[ma] for ma, _ in BRACKET_R16])
+        slots_b_r16 = np.array([winners_r32[mb] for _, mb in BRACKET_R16])
+        for key_set, info in resultados_reales_playoff.items():
+            if info["ronda"] != "R16":
+                continue
+            gan_nombre = info["ganador"]
+            gan_idx_f = eq_idx.get(gan_nombre)
+            per_nombre = next((n for n in key_set if n != gan_nombre), None)
+            per_idx_f = eq_idx.get(per_nombre) if per_nombre else None
+            if gan_idx_f is None or per_idx_f is None:
+                continue
+            _forzar_ganador_en_ronda(
+                winners_r16, slots_a_r16, slots_b_r16,
+                gan_idx_f, per_idx_f, "R16",
+            )
+
     # --- Cuartos (4 partidos) ---
     winners_qf = np.zeros((4, n_sims), dtype=np.int32)
     for i, (ma, mb) in enumerate(BRACKET_QF):
@@ -581,6 +618,23 @@ def simular_torneo_completo(
             w = _aplicar_resultado_real(w, sa, sb)
         winners_qf[i] = w
         np.add.at(cnt_qf, w, 1)
+
+    if resultados_reales_playoff:
+        slots_a_qf = np.array([winners_r16[ma] for ma, _ in BRACKET_QF])
+        slots_b_qf = np.array([winners_r16[mb] for _, mb in BRACKET_QF])
+        for key_set, info in resultados_reales_playoff.items():
+            if info["ronda"] != "QF":
+                continue
+            gan_nombre = info["ganador"]
+            gan_idx_f = eq_idx.get(gan_nombre)
+            per_nombre = next((n for n in key_set if n != gan_nombre), None)
+            per_idx_f = eq_idx.get(per_nombre) if per_nombre else None
+            if gan_idx_f is None or per_idx_f is None:
+                continue
+            _forzar_ganador_en_ronda(
+                winners_qf, slots_a_qf, slots_b_qf,
+                gan_idx_f, per_idx_f, "QF",
+            )
 
     # --- Semifinales (2 partidos) ---
     winners_sf = np.zeros((2, n_sims), dtype=np.int32)
@@ -600,6 +654,23 @@ def simular_torneo_completo(
         losers_sf[i]  = l
         np.add.at(cnt_sf, w, 1)
 
+    if resultados_reales_playoff:
+        slots_a_sf = np.array([winners_qf[ma] for ma, _ in BRACKET_SF])
+        slots_b_sf = np.array([winners_qf[mb] for _, mb in BRACKET_SF])
+        for key_set, info in resultados_reales_playoff.items():
+            if info["ronda"] != "SF":
+                continue
+            gan_nombre = info["ganador"]
+            gan_idx_f = eq_idx.get(gan_nombre)
+            per_nombre = next((n for n in key_set if n != gan_nombre), None)
+            per_idx_f = eq_idx.get(per_nombre) if per_nombre else None
+            if gan_idx_f is None or per_idx_f is None:
+                continue
+            _forzar_ganador_en_ronda(
+                winners_sf, slots_a_sf, slots_b_sf,
+                gan_idx_f, per_idx_f, "SF",
+            )
+
     # --- Final ---
     ta, tb = winners_sf[0], winners_sf[1]
     ea = elos_arr[ta]; eb = elos_arr[tb]
@@ -608,24 +679,37 @@ def simular_torneo_completo(
     campeon = np.where(r < we_a, ta, tb)
     np.add.at(cnt_campeon, campeon, 1)
 
-    # --- Corrección post-hoc de conteos para resultados playoff conocidos ---
-    # El forzado del bracket puede causar que el ganador aparezca en dos slots
-    # simultáneamente (el forzado + su slot t3 original), inflando su cnt_r32 > n_sims.
-    # También garantizamos que los perdedores tengan exactamente 0 en todas las rondas.
+    # --- Corrección post-hoc: fijar contadores según la ronda real ---
+    # Ganador: 100% en la ronda que ganó Y todas las anteriores.
+    # Perdedor: 0% desde la ronda que perdió en adelante
+    #   (las rondas anteriores se conservan: un semifinalista pasó R32+R16+QF).
     if resultados_reales_playoff:
-        for key_set, gan_nombre in resultados_reales_playoff.items():
-            nombres_par = list(key_set)
+        _ganados = {
+            "R32": [cnt_r32],
+            "R16": [cnt_r32, cnt_r16],
+            "QF":  [cnt_r32, cnt_r16, cnt_qf],
+            "SF":  [cnt_r32, cnt_r16, cnt_qf, cnt_sf],
+            "F":   [cnt_r32, cnt_r16, cnt_qf, cnt_sf, cnt_campeon],
+        }
+        _perdidos = {
+            "R32": [cnt_r32, cnt_r16, cnt_qf, cnt_sf, cnt_campeon],
+            "R16": [cnt_r16, cnt_qf, cnt_sf, cnt_campeon],
+            "QF":  [cnt_qf, cnt_sf, cnt_campeon],
+            "SF":  [cnt_sf, cnt_campeon],
+            "F":   [cnt_campeon],
+        }
+        for key_set, info in resultados_reales_playoff.items():
+            gan_nombre = info["ganador"]
+            ronda = info.get("ronda", "R32")
             gan_idx_pp = eq_idx.get(gan_nombre)
-            per_nombre = next((n for n in nombres_par if n != gan_nombre), None)
+            per_nombre = next((n for n in key_set if n != gan_nombre), None)
             per_idx_pp = eq_idx.get(per_nombre) if per_nombre else None
             if gan_idx_pp is None or per_idx_pp is None:
                 continue
-            # Perdedor: 0 en todas las rondas eliminatorias
-            for cnt in (cnt_r32, cnt_r16, cnt_qf, cnt_sf, cnt_campeon):
+            for cnt in _perdidos.get(ronda, _perdidos["R32"]):
                 cnt[per_idx_pp] = 0
-            # Ganador: 100% en R32 (ya superó la ronda, independientemente
-            # de en cuántas simulaciones el t3_filled lo puso en su slot real)
-            cnt_r32[gan_idx_pp] = n_sims
+            for cnt in _ganados.get(ronda, _ganados["R32"]):
+                cnt[gan_idx_pp] = n_sims
 
     # --- Construir DataFrame de resultados ---
     df = pd.DataFrame({

@@ -1,9 +1,10 @@
 # Script de actualización automática - Mundial ELO
 # Copia el CSV actualizado y lo sube a GitHub
 
-$origen = "C:\Users\magr\OneDrive - Unidad Editorial\Documents\Datasets\Mundial\proyecto-mundial-elo\Mundial\mundial2026_tabla_rondas.csv"
-$repo   = "C:\Users\magr\OneDrive - Unidad Editorial\Documents\Datasets\Mundial\mundial-elo"
-$destino = "$repo\data.csv"
+$proyecto = "C:\Users\magr\OneDrive - Unidad Editorial\Documents\Datasets\Mundial\proyecto-mundial-elo"
+$repo     = "C:\Users\magr\OneDrive - Unidad Editorial\Documents\Datasets\Mundial\mundial-elo"
+$origen   = "$proyecto\Mundial\mundial2026_tabla_rondas.csv"
+$destino  = "$repo\data.csv"
 
 # Verificar que el archivo origen existe
 if (-not (Test-Path $origen)) {
@@ -14,6 +15,13 @@ if (-not (Test-Path $origen)) {
 # Copiar CSV al repo
 Copy-Item $origen -Destination $destino -Force
 Write-Host "CSV copiado correctamente."
+
+# Sincronizar modelo.py y resultados.py desde proyecto-mundial-elo
+# Esto garantiza que el CI de GitHub siempre use exactamente el mismo
+# código que el pipeline local, sin necesidad de editar dos archivos.
+Copy-Item "$proyecto\modelo.py"    -Destination "$repo\modelo.py"    -Force
+Copy-Item "$proyecto\resultados.py" -Destination "$repo\resultados.py" -Force
+Write-Host "modelo.py y resultados.py sincronizados desde proyecto-mundial-elo."
 
 # Generar snapshot del día
 py "$repo\generar_snapshot_csv.py"
