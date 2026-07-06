@@ -88,8 +88,8 @@ def _fetch_dia_espn_playoff(fecha_yyyymmdd: str) -> list[tuple[str, str, str]]:
     """
     Obtiene partidos eliminatorios terminados de un día.
     Devuelve lista de (eq1_es, eq2_es, nombre_ganador_es).
-    Usa el campo 'winner' de ESPN en lugar de comparar goles
-    (partidos que van a penaltis terminan 1-1 en el marcador normal).
+    Usa el campo 'winner' de ESPN (los partidos de penaltis terminan
+    empatados en el marcador, así que no se puede comparar goles).
     """
     url = (
         "https://site.api.espn.com/apis/site/v2/sports/soccer"
@@ -128,8 +128,8 @@ def _fetch_dia_espn_playoff(fecha_yyyymmdd: str) -> list[tuple[str, str, str]]:
 
 # Fechas oficiales de cada ronda del Mundial 2026
 _PLAYOFF_FECHAS: list[tuple] = [
-    ("R32", date(2026, 6, 28), date(2026, 7, 4)),
-    ("R16", date(2026, 7, 5),  date(2026, 7, 8)),
+    ("R32", date(2026, 6, 28), date(2026, 7, 3)),
+    ("R16", date(2026, 7, 4),  date(2026, 7, 8)),
     ("QF",  date(2026, 7, 10), date(2026, 7, 11)),
     ("SF",  date(2026, 7, 14), date(2026, 7, 15)),
     ("F",   date(2026, 7, 19), date(2026, 7, 19)),
@@ -149,7 +149,6 @@ def obtener_resultados_playoff(
     """
     Obtiene resultados ya jugados de la fase eliminatoria (R32 en adelante).
     Retorna {frozenset({eq1, eq2}): {"ganador": nombre, "ronda": "R32"|"R16"|"QF"|"SF"|"F"}}
-    Si ESPN no devuelve resultados, devuelve dict vacío (el modelo simula todo).
     """
     if fecha_hoy is None:
         fecha_hoy = date.today()

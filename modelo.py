@@ -293,13 +293,12 @@ def seleccionar_mejores_terceros(
     n_sims = res_grupos["n_sims"]
     eq_nombre = res_grupos["equipo_nombre"]
 
-    # Construir matrices (12, n_sims)
     pts_mat = np.zeros((12, n_sims), dtype=np.int32)
     gd_mat  = np.zeros((12, n_sims), dtype=np.int32)
     gf_mat  = np.zeros((12, n_sims), dtype=np.int32)
     elo_mat = np.zeros((12, n_sims), dtype=np.float64)
     idx_mat = np.zeros((12, n_sims), dtype=np.int32)
-    grp_mat = np.zeros((12, n_sims), dtype=np.int8)   # índice de grupo 0-11
+    grp_mat = np.zeros((12, n_sims), dtype=np.int8)
 
     elos_arr = np.array([elos.get(eq_nombre[j], 1500.0) for j in range(len(eq_nombre))])
 
@@ -312,7 +311,6 @@ def seleccionar_mejores_terceros(
         elo_mat[i]  = elos_arr[idx]
         grp_mat[i]  = i
 
-    # Desempate: puntos → GD → GF → Elo
     scores = (
         pts_mat.astype(np.float64) * 1e7
         + (gd_mat + 200).astype(np.float64) * 1e4
@@ -321,9 +319,9 @@ def seleccionar_mejores_terceros(
     )
 
     sims_idx = np.arange(n_sims)
-    ranking = np.argsort(-scores, axis=0)[:n_mejores]   # (n_mejores, n_sims)
-    mejores_idx = idx_mat[ranking, sims_idx[np.newaxis, :]]   # (n_mejores, n_sims)
-    mejores_grp = grp_mat[ranking, sims_idx[np.newaxis, :]]   # (n_mejores, n_sims)
+    ranking = np.argsort(-scores, axis=0)[:n_mejores]
+    mejores_idx = idx_mat[ranking, sims_idx[np.newaxis, :]]
+    mejores_grp = grp_mat[ranking, sims_idx[np.newaxis, :]]
 
     return mejores_idx, mejores_grp
 
@@ -332,15 +330,12 @@ def seleccionar_mejores_terceros(
 # 4. SIMULACIÓN ELIMINATORIAS
 # ---------------------------------------------------------------------------
 
-# Cuadro oficial del Mundial 2026 (32 slots = 16 cruces × 2 equipos).
-# Cada slot es ("g", grupo, posición) o ("t3", subconjunto_grupos).
-# Orden: los cruces 0-1 alimentan el octavo P89, 2-3 → P90, ..., 14-15 → P96.
 SLOTS_R32: list[tuple] = [
     # Cruce P74: 1ºE vs mejor 3º(A,B,C,D,F)
     ("g", "E", 1), ("t3", "ABCDF"),
     # Cruce P77: 1ºI vs mejor 3º(C,D,F,G,H)
     ("g", "I", 1), ("t3", "CDFGH"),
-    # Cruce P73: 2ºA vs 2ºB  ← RSA vs CAN ya confirmado
+    # Cruce P73: 2ºA vs 2ºB
     ("g", "A", 2), ("g", "B", 2),
     # Cruce P75: 1ºF vs 2ºC
     ("g", "F", 1), ("g", "C", 2),
@@ -376,6 +371,21 @@ SLOTS_R32: list[tuple] = [
 # R16: M0 vs M1 → R16-0, M2 vs M3 → R16-1, ...
 # QF: R16-0 vs R16-1 → QF-0, ...
 # SF: QF-0 vs QF-1 → SF-0, QF-2 vs QF-3 → SF-1
+# Asignación oficial FIFA de terceros clasificados a slots del bracket.
+# Derivado del cuadro real del Mundial 2026: grupo del 3º → índice de slot en SLOTS_R32.
+# Terceros clasificados: B(Bosnia), D(Paraguay), E(Ecuador), F(Suecia),
+#                        I(Senegal), J(Argelia), K(RD Congo), L(Ghana).
+_T3_GRUPO_A_SLOT: dict[str, int] = {
+    "B": 13,  # P81: Bosnia vs EE.UU. (1ºD)
+    "D": 1,   # P74: Paraguay vs Alemania (1ºE)
+    "E": 21,  # P79: Ecuador vs México (1ºA)
+    "F": 3,   # P77: Suecia vs Francia (1ºI)
+    "I": 15,  # P82: Senegal vs Bélgica (1ºG)
+    "J": 29,  # P85: Argelia vs Suiza (1ºB)
+    "K": 23,  # P80: RD Congo vs Inglaterra (1ºL)
+    "L": 31,  # P87: Ghana vs Colombia (1ºK)
+}
+
 BRACKET_R16 = [(0, 1), (2, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15)]
 BRACKET_QF  = [(0, 1), (2, 3), (4, 5), (6, 7)]
 BRACKET_SF  = [(0, 1), (2, 3)]
@@ -446,34 +456,44 @@ def simular_torneo_completo(
         np.add.at(cnt_grupos, mejores_3[row], 1)
 
     # --- Asignar las 8 mejores 3ªs a sus 8 slots t3 del cuadro ---
-    # Cada slot t3 acepta la mejor 3ª cuyo grupo esté en el subconjunto.
-    # Procesamos en orden; si hay empate de cobertura, el mejor-ranked gana.
     grp_letra_a_idx = {g: i for i, g in enumerate(lista_grupos)}
 
     t3_slot_defs = [
         (i, s[1]) for i, s in enumerate(SLOTS_R32) if s[0] == "t3"
-    ]  # [(índice_en_SLOTS_R32, subconjunto_str), ...]
+    ]
 
     assigned   = np.zeros((8, n_sims), dtype=bool)
-    t3_filled  = {}   # índice_en_SLOTS_R32 → array (n_sims,) de idx global
+    t3_filled  = {}
 
     for slot_idx, subset_str in t3_slot_defs:
-        subset_idxs = {grp_letra_a_idx[g] for g in subset_str}
-        in_subset = np.isin(mejores_grp.astype(int), list(subset_idxs))  # (8, n_sims)
-        available = in_subset & ~assigned
-
+        # 1. Asignación oficial FIFA: grupo predeterminado para este slot
+        grupo_oficial = next(
+            (g for g, s in _T3_GRUPO_A_SLOT.items() if s == slot_idx), None
+        )
         chosen_rank = np.full(n_sims, -1, dtype=np.int32)
-        for rank in range(8):
-            can_use = available[rank] & (chosen_rank < 0)
-            chosen_rank = np.where(can_use, rank, chosen_rank)
-
-        # Fallback: si ningún grupo coincide (no debería ocurrir) usar el mejor libre
-        no_match = chosen_rank < 0
-        if no_match.any():
+        if grupo_oficial and grupo_oficial in grp_letra_a_idx:
+            grp_num = grp_letra_a_idx[grupo_oficial]
             for rank in range(8):
-                fallback = no_match & ~assigned[rank]
-                chosen_rank = np.where(fallback & (chosen_rank < 0), rank, chosen_rank)
-                no_match = chosen_rank < 0
+                mask = (mejores_grp[rank] == grp_num) & ~assigned[rank] & (chosen_rank < 0)
+                chosen_rank = np.where(mask, rank, chosen_rank)
+
+        # 2. Fallback greedy por el pool del slot (si el grupo oficial no clasificó t3)
+        if (chosen_rank < 0).any():
+            subset_idxs = {grp_letra_a_idx[g] for g in subset_str if g in grp_letra_a_idx}
+            in_subset = np.isin(mejores_grp.astype(int), list(subset_idxs))
+            available = in_subset & ~assigned
+            fallback_mask = chosen_rank < 0
+            for rank in range(8):
+                can_use = available[rank] & fallback_mask & (chosen_rank < 0)
+                chosen_rank = np.where(can_use, rank, chosen_rank)
+
+        # 3. Último recurso: cualquier equipo no asignado aún
+        if (chosen_rank < 0).any():
+            last_resort = chosen_rank < 0
+            for rank in range(8):
+                fb = last_resort & ~assigned[rank] & (chosen_rank < 0)
+                chosen_rank = np.where(fb, rank, chosen_rank)
+                last_resort = chosen_rank < 0
 
         chosen_team = mejores_3[0].copy()
         for rank in range(8):
@@ -564,10 +584,19 @@ def simular_torneo_completo(
         np.add.at(cnt_r32, w, 1)
 
     # Forzar winners_r32 para todos los resultados R32 confirmados.
-    # Garantiza que R16 reciba los equipos correctos aunque el t3 no fuera uniforme.
+    # Enfoque robusto: localiza el partido usando el slot fijo (g-slot) del equipo,
+    # independientemente de qué equipo t3 aparezca en el slot opuesto.
+    # Esto garantiza que R16 reciba los equipos correctos incluso cuando
+    # _T3_GRUPO_A_SLOT no coincide exactamente con los terceros reales.
     if resultados_reales_playoff:
-        slots_a_r32 = bracket[0::2]
-        slots_b_r32 = bracket[1::2]
+        # Construir mapa equipo → índice de partido R32 (para todos los slots fijos)
+        _team_to_r32_match: dict[int, int] = {}
+        for _m in range(16):
+            for _si in [2 * _m, 2 * _m + 1]:
+                _uniq = np.unique(bracket[_si])
+                if len(_uniq) == 1:
+                    _team_to_r32_match[int(_uniq[0])] = _m
+
         for key_set, info in resultados_reales_playoff.items():
             if info["ronda"] != "R32":
                 continue
@@ -577,10 +606,16 @@ def simular_torneo_completo(
             per_idx_f = eq_idx.get(per_nombre) if per_nombre else None
             if gan_idx_f is None or per_idx_f is None:
                 continue
-            _forzar_ganador_en_ronda(
-                winners_r32, slots_a_r32, slots_b_r32,
-                gan_idx_f, per_idx_f, "R32",
-            )
+            # Buscar el partido por el equipo fijo (ganador primero, luego perdedor)
+            _m_r32 = _team_to_r32_match.get(gan_idx_f)
+            if _m_r32 is None:
+                _m_r32 = _team_to_r32_match.get(per_idx_f)
+            if _m_r32 is not None:
+                winners_r32[_m_r32][:] = gan_idx_f
+                logger.info("R32 forzado partido %d: %s gana", _m_r32, gan_nombre)
+            else:
+                logger.warning("R32: no se encontró partido para %s vs %s",
+                               gan_nombre, per_nombre)
 
     # --- R16 (8 partidos) ---
     winners_r16 = np.zeros((8, n_sims), dtype=np.int32)
@@ -684,19 +719,30 @@ def simular_torneo_completo(
     # Perdedor: 0% desde la ronda que perdió en adelante
     #   (las rondas anteriores se conservan: un semifinalista pasó R32+R16+QF).
     if resultados_reales_playoff:
+        # Ganador de una ronda: 100% en esa ronda y todas las anteriores.
         _ganados = {
-            "R32": [cnt_r32],
-            "R16": [cnt_r32, cnt_r16],
-            "QF":  [cnt_r32, cnt_r16, cnt_qf],
-            "SF":  [cnt_r32, cnt_r16, cnt_qf, cnt_sf],
-            "F":   [cnt_r32, cnt_r16, cnt_qf, cnt_sf, cnt_campeon],
+            "R32": [cnt_grupos, cnt_r32],
+            "R16": [cnt_grupos, cnt_r32, cnt_r16],
+            "QF":  [cnt_grupos, cnt_r32, cnt_r16, cnt_qf],
+            "SF":  [cnt_grupos, cnt_r32, cnt_r16, cnt_qf, cnt_sf],
+            "F":   [cnt_grupos, cnt_r32, cnt_r16, cnt_qf, cnt_sf, cnt_campeon],
         }
+        # Perdedor: 0% desde la ronda que perdió en adelante.
         _perdidos = {
             "R32": [cnt_r32, cnt_r16, cnt_qf, cnt_sf, cnt_campeon],
             "R16": [cnt_r16, cnt_qf, cnt_sf, cnt_campeon],
             "QF":  [cnt_qf, cnt_sf, cnt_campeon],
             "SF":  [cnt_sf, cnt_campeon],
             "F":   [cnt_campeon],
+        }
+        # Perdedor: 100% en las rondas que sí ganó para llegar hasta ahí.
+        # Necesario cuando ESPN no tiene el resultado de alguna ronda previa.
+        _alcanzados_por_perdedor = {
+            "R32": [cnt_grupos],
+            "R16": [cnt_grupos, cnt_r32],
+            "QF":  [cnt_grupos, cnt_r32, cnt_r16],
+            "SF":  [cnt_grupos, cnt_r32, cnt_r16, cnt_qf],
+            "F":   [cnt_grupos, cnt_r32, cnt_r16, cnt_qf, cnt_sf],
         }
         for key_set, info in resultados_reales_playoff.items():
             gan_nombre = info["ganador"]
@@ -708,6 +754,8 @@ def simular_torneo_completo(
                 continue
             for cnt in _perdidos.get(ronda, _perdidos["R32"]):
                 cnt[per_idx_pp] = 0
+            for cnt in _alcanzados_por_perdedor.get(ronda, []):
+                cnt[per_idx_pp] = n_sims
             for cnt in _ganados.get(ronda, _ganados["R32"]):
                 cnt[gan_idx_pp] = n_sims
 

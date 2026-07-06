@@ -37,7 +37,7 @@ if ($LASTEXITCODE -ne 0) {
     git rebase --abort
     exit 1
 }
-git add data.csv snapshots/
+git add data.csv snapshots/ modelo.py resultados.py
 $fecha = Get-Date -Format "yyyy-MM-dd HH:mm"
 git commit -m "Actualización automática $fecha"
 git push origin main
