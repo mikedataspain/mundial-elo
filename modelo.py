@@ -782,7 +782,7 @@ def simular_torneo_completo(
     # Ordenar por ronda máxima alcanzada (desc) y dentro de ella por Campeón% (desc).
     # Un equipo eliminado en QF debe aparecer por encima de otro eliminado en R16,
     # aunque ambos tengan Campeón%=0.
-    _ronda_cols = ["1/32%", "1/16%", "Cuartos%", "Semis%", "Campeón%"]
+    _ronda_cols = ["Grupos%", "1/32%", "1/16%", "Cuartos%", "Semis%", "Campeón%"]
     df["_ronda_max"] = (df[_ronda_cols] > 0).sum(axis=1)
     df = df.sort_values(["_ronda_max", "Campeón%"], ascending=[False, False]).reset_index(drop=True)
     df = df.drop(columns=["_ronda_max"])
