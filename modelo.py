@@ -744,7 +744,12 @@ def simular_torneo_completo(
             "SF":  [cnt_grupos, cnt_r32, cnt_r16, cnt_qf],
             "F":   [cnt_grupos, cnt_r32, cnt_r16, cnt_qf, cnt_sf],
         }
-        for key_set, info in resultados_reales_playoff.items():
+        _ronda_orden = {"R32": 0, "R16": 1, "QF": 2, "SF": 3, "F": 4}
+        _sorted_playoff = sorted(
+            resultados_reales_playoff.items(),
+            key=lambda kv: _ronda_orden.get(kv[1].get("ronda", "R32"), 0),
+        )
+        for key_set, info in _sorted_playoff:
             gan_nombre = info["ganador"]
             ronda = info.get("ronda", "R32")
             gan_idx_pp = eq_idx.get(gan_nombre)
