@@ -1,54 +1,46 @@
 {
-  "fecha": "2026-07-11",
+  "fecha": "2026-07-12",
   "probs": {
     "probs": {
+      "Argentina": {
+        "Grupos%": 100.0,
+        "1/32%": 100.0,
+        "1/16%": 100.0,
+        "Cuartos%": 100.0,
+        "Semis%": 66.1,
+        "Campeón%": 34.2
+      },
       "España": {
         "Grupos%": 100.0,
         "1/32%": 100.0,
         "1/16%": 100.0,
         "Cuartos%": 100.0,
-        "Semis%": 53.2,
-        "Campeón%": 31.7
-      },
-      "Argentina": {
-        "Grupos%": 100.0,
-        "1/32%": 100.0,
-        "1/16%": 100.0,
-        "Cuartos%": 79.0,
-        "Semis%": 55.6,
-        "Campeón%": 28.5
+        "Semis%": 53.1,
+        "Campeón%": 29.4
       },
       "Francia": {
         "Grupos%": 100.0,
         "1/32%": 100.0,
         "1/16%": 100.0,
         "Cuartos%": 100.0,
-        "Semis%": 46.8,
-        "Campeón%": 26.5
+        "Semis%": 46.9,
+        "Campeón%": 24.5
       },
       "Inglaterra": {
         "Grupos%": 100.0,
         "1/32%": 100.0,
         "1/16%": 100.0,
-        "Cuartos%": 65.4,
-        "Semis%": 26.8,
-        "Campeón%": 9.4
-      },
-      "Noruega": {
-        "Grupos%": 100.0,
-        "1/32%": 100.0,
-        "1/16%": 100.0,
-        "Cuartos%": 34.6,
-        "Semis%": 9.5,
-        "Campeón%": 2.1
+        "Cuartos%": 100.0,
+        "Semis%": 33.9,
+        "Campeón%": 11.9
       },
       "Suiza": {
         "Grupos%": 100.0,
         "1/32%": 100.0,
         "1/16%": 100.0,
-        "Cuartos%": 21.0,
-        "Semis%": 8.2,
-        "Campeón%": 1.8
+        "Cuartos%": 0.0,
+        "Semis%": 0.0,
+        "Campeón%": 0.0
       },
       "Marruecos": {
         "Grupos%": 100.0,
@@ -59,6 +51,14 @@
         "Campeón%": 0.0
       },
       "Bélgica": {
+        "Grupos%": 100.0,
+        "1/32%": 100.0,
+        "1/16%": 100.0,
+        "Cuartos%": 0.0,
+        "Semis%": 0.0,
+        "Campeón%": 0.0
+      },
+      "Noruega": {
         "Grupos%": 100.0,
         "1/32%": 100.0,
         "1/16%": 100.0,
