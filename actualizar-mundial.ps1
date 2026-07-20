@@ -17,26 +17,33 @@ Copy-Item $origen -Destination $destino -Force
 Write-Host "CSV copiado correctamente."
 
 # Sincronizar modelo.py y resultados.py desde proyecto-mundial-elo
-# Esto garantiza que el CI de GitHub siempre use exactamente el mismo
-# código que el pipeline local, sin necesidad de editar dos archivos.
-Copy-Item "$proyecto\modelo.py"    -Destination "$repo\modelo.py"    -Force
+Copy-Item "$proyecto\modelo.py"     -Destination "$repo\modelo.py"     -Force
 Copy-Item "$proyecto\resultados.py" -Destination "$repo\resultados.py" -Force
 Write-Host "modelo.py y resultados.py sincronizados desde proyecto-mundial-elo."
 
-# Generar snapshot del día
-py "$repo\generar_snapshot_csv.py"
-if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Snapshot no generado (no bloquea la subida)."
+Set-Location $repo
+
+# Eliminar snapshots no rastreados para que el pull nunca falle por conflicto
+$untracked = git ls-files --others --exclude-standard snapshots/
+if ($untracked) {
+    $untracked | ForEach-Object { Remove-Item $_ -Force -ErrorAction SilentlyContinue }
+    Write-Host "Snapshots locales no rastreados eliminados antes del pull."
 }
 
-# Subir a GitHub
-Set-Location $repo
+# Pull (ahora sin riesgo de conflicto con snapshots)
 git pull --rebase --autostash origin main
 if ($LASTEXITCODE -ne 0) {
     Write-Error "git pull --rebase falló. Abortando push."
     git rebase --abort
     exit 1
 }
+
+# Generar snapshot del día (después del pull)
+py "$repo\generar_snapshot_csv.py"
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Snapshot no generado (no bloquea la subida)."
+}
+
 git add data.csv snapshots/ modelo.py resultados.py
 $fecha = Get-Date -Format "yyyy-MM-dd HH:mm"
 git commit -m "Actualización automática $fecha"
