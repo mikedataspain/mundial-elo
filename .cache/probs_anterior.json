@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-07-19",
+  "fecha": "2026-07-21",
   "probs": {
     "probs": {
       "España": {
@@ -8,7 +8,7 @@
         "1/16%": 100.0,
         "Cuartos%": 100.0,
         "Semis%": 100.0,
-        "Campeón%": 50.0
+        "Campeón%": 100.0
       },
       "Argentina": {
         "Grupos%": 100.0,
@@ -16,7 +16,7 @@
         "1/16%": 100.0,
         "Cuartos%": 100.0,
         "Semis%": 100.0,
-        "Campeón%": 50.0
+        "Campeón%": 0.0
       },
       "Francia": {
         "Grupos%": 100.0,
